@@ -114,20 +114,31 @@ function XCF.CreateMainMenu(Menu)
 		}
 	}
 
+	-- ExpandRecurse expands instantly, so this is less jarring.
+	-- TODO: Maybe BFS looks better than DFS?
+	local function ExpandRecurseSmooth(Node, Expand)
+		Node:SetExpanded(Expand)
+		for _, Child in pairs(Node:GetChildNodes()) do
+			ExpandRecurseSmooth(Child, Expand)
+		end
+	end
+
+	-- Handles what happens when a node is selected
 	function Tree:UpdateTree(Old, New)
 		if Old == New then return end
 
-		New:ExpandRecurse(true)
+		ExpandRecurseSmooth(New, true)
 
 		-- Collapse every other ancestor node
 		for _, Node in pairs(Tree.Children) do
 			if Node ~= New.Ancestor then
-				Node:ExpandRecurse(false)
+				ExpandRecurseSmooth(Node, false)
 			end
 		end
 
 		local NodeData = New.NodeData or {}
 
+		-- Clear the temporary menu panel and load the menu
 		Clearable:ClearChildren()
 		Clearable:AddTitle(NodeData.Name)
 
@@ -151,6 +162,7 @@ function XCF.CreateMainMenu(Menu)
 		local Node = ParentNode:AddNode(NodeData.Name, NodeData.Icon)
 		Node.NodeData = NodeData
 
+		-- An ancestor is any node added directly to the tree
 		if ParentNode == DTree then
 			Node.Ancestor = Node
 			DTree.Children = DTree.Children or {}
@@ -159,6 +171,7 @@ function XCF.CreateMainMenu(Menu)
 
 		Node.Ancestor = Node.Ancestor or ParentNode.Ancestor
 
+		-- Recursively add children
 		if NodeData.Children then
 			for _, ChildData in ipairs(NodeData.Children) do
 				AddNodeWithChildren(DTree, Node, ChildData)
