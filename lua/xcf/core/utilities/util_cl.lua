@@ -48,6 +48,7 @@ function XCF.InitMenuReloadableBase(Panel, UniqueID, Command, CreateMenu)
 	return BasePanel
 end
 
+
 --- Creates the main menu for XCF given an existing XCF_Panel
 function XCF.CreateMainMenu(Menu)
 	-- Add test elements
