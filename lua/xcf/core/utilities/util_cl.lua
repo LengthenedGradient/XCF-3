@@ -57,10 +57,6 @@ function XCF.CreateMainMenu(Menu)
 
 	local Clearable = Menu:AddPanel("XCF_Panel")
 
-	local function DefaultAction(Panel)
-		Panel:AddLabel("This is the default action. Select a node to see more options.")
-	end
-
 	TreeData = {
 		{
 			Name = "About", Icon = "icon16/information.png",
@@ -73,10 +69,21 @@ function XCF.CreateMainMenu(Menu)
 		{
 			Name = "Tools", Icon = "icon16/wrench.png",
 			Children = {
-				{Name = "Clientside Settings", Icon = "icon16/user.png"},
-				{Name = "Serverside Settings", Icon = "icon16/server.png"},
+				{
+					Name = "Settings", Icon = "icon16/wrench_orange.png", Children = {
+						{Name = "Clientside Settings", Icon = "icon16/user.png"},
+						{Name = "Serverside Settings", Icon = "icon16/server.png"},
+					}
+				},
+				{
+					Name = "Permissions", Icon = "icon16/page_white_edit.png", Children = {
+						{Name = "Player Permissions", Icon = "icon16/group_edit.png"},
+						{Name = "Server Permissions", Icon = "icon16/server_edit.png"},
+					}
+				},
+				{Name = "Safezones", Icon = "icon16/building_add.png"},
 				{Name = "Scanner", Icon = "icon16/magnifier.png"},
-				{Name = "Battle Log", Icon = "icon16/chart_bar.png"},
+				{Name = "Battle Logger", Icon = "icon16/chart_curve.png"},
 			}
 		},
 		{
@@ -99,7 +106,7 @@ function XCF.CreateMainMenu(Menu)
 						{Name = "Baseplates", Icon = "icon16/shape_square.png"},
 						{Name = "Turrets", Icon = "icon16/shape_align_center.png"},
 						{Name = "Crew", Icon = "icon16/user_female.png"},
-						{Name = "Controllers", Icon = "icon16/computer.png"}
+						{Name = "Controllers", Icon = "icon16/controller.png"}
 					}
 				},
 				{
@@ -112,6 +119,10 @@ function XCF.CreateMainMenu(Menu)
 			}
 		}
 	}
+
+	local function DefaultAction(Panel)
+		Panel:AddLabel("This menu has not been implemented yet.")
+	end
 
 	-- ExpandRecurse expands instantly, so this is less jarring.
 	-- TODO: Maybe BFS looks better than DFS?
