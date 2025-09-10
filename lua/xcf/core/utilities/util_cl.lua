@@ -73,8 +73,8 @@ function XCF.CreateMainMenu(Menu)
 		{
 			Name = "Settings", Icon = "icon16/wrench.png",
 			Children = {
-				{Name = "Clientside", Icon = "icon16/cog.png"},
-				{Name = "Serverside", Icon = "icon16/bullet_wrench.png"},
+				{Name = "Clientside", Icon = "icon16/user.png"},
+				{Name = "Serverside", Icon = "icon16/server.png"},
 			}
 		},
 		{
@@ -97,14 +97,23 @@ function XCF.CreateMainMenu(Menu)
 						{Name = "Baseplates", Icon = "icon16/shape_square.png"},
 						{Name = "Turrets", Icon = "icon16/shape_align_center.png"},
 						{Name = "Crew", Icon = "icon16/user_female.png"},
-						{Name = "Controllers", Icon = "icon16/joystick.png"}
+						{Name = "Controllers", Icon = "icon16/computer.png"}
 					}
 				},
 				{
 					Name = "Peripherals", Icon = "icon16/drive.png", Children = {
 						{Name = "Sensors", Icon = "icon16/transmit.png"},
+						{Name = "Guidance", Icon = "icon16/joystick.png"},
+						{Name = "Refill", Icon = "icon16/arrow_refresh.png"},
 					},
 				},
+			}
+		},
+		{
+			Name = "Gadgets", Icon = "icon16/wrench_orange.png",
+			Children = {
+				{Name = "Scanner", Icon = "icon16/magnifier.png"},
+				{Name = "Battle Log", Icon = "icon16/chart_bar.png"},
 			}
 		}
 	}
@@ -147,15 +156,12 @@ function XCF.CreateMainMenu(Menu)
 
 	-- Add all top-level nodes
 	for _, NodeData in ipairs(TreeData) do
-		local TopLevel = AddNodeWithChildren(Tree, NodeData)
-		TopLevel:ExpandRecurse(true)
+		AddNodeWithChildren(Tree, NodeData):ExpandRecurse(true)
 	end
 end
 
-print("redefine", XCF.CreateMainMenu)
-
 -- Pop out menu tab example
-concommand.Add( "open_frame", function()
+concommand.Add("open_frame", function()
 	local Width, Height = ScrW(), ScrH()
 	local DFrame = vgui.Create("DFrame")
 	DFrame:SetPos(Width * 0.25, Height * 0.25)
@@ -171,4 +177,4 @@ concommand.Add( "open_frame", function()
 	local BasePanel = XCF.InitMenuReloadableBase(DScrollPanel, "Popout", "xcf_reload_popout_menu", "CreateMainMenu")
 	BasePanel:Dock(TOP)
 	BasePanel:DockMargin(10, 30, 10, 10)
-end )
+end)
