@@ -25,10 +25,9 @@ end
 
 --- Initializes an ACF menu base panel on the provided panel.
 --- @param Panel any The panel to add the base panel to
---- @param UniqueID string A unique ID for this menu (see above)
 --- @param Command string The command to run to reload the menu
 --- @param CreateMenu string The name of the function to call to create the menu (on the XCF table)
-function XCF.InitMenuReloadableBase(Panel, UniqueID, Command, CreateMenu)
+function XCF.InitMenuReloadableBase(Panel, Command, CreateMenu)
 	local BasePanel = vgui.Create("XCF_Panel", Panel)
 
 	-- Contains the reload button
@@ -223,7 +222,7 @@ concommand.Add("open_frame", function()
 	local DScrollPanel = vgui.Create("DScrollPanel", DFrame)
 	DScrollPanel:Dock(FILL)
 
-	local BasePanel = XCF.InitMenuReloadableBase(DScrollPanel, "Popout", "xcf_reload_popout_menu", "CreateMainMenu")
+	local BasePanel = XCF.InitMenuReloadableBase(DScrollPanel, "xcf_reload_popout_menu", "CreateMainMenu")
 	BasePanel:Dock(TOP)
 	BasePanel:DockMargin(10, 30, 10, 10)
 end)

@@ -8,13 +8,14 @@ do -- Player loaded hook
 		util.AddNetworkString("XCF_PlayerLoaded")
 
 		net.Receive("XCF_PlayerLoaded", function(_, Player)
+			print("SV XCF_OnLoadPlayer " .. Player:Nick())
 			hook.Run("XCF_OnLoadPlayer", Player)
 		end)
 	else
 		hook.Add("InitPostEntity", "XCF Player Loaded", function()
 			net.Start("XCF_PlayerLoaded")
 			net.SendToServer()
-
+			print("CL InitPostEntity " .. LocalPlayer():Nick())
 			hook.Remove("InitPostEntity", "XCF Player Loaded")
 		end)
 	end
