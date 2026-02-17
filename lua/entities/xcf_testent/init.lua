@@ -18,4 +18,14 @@ function ENT:Initialize()
 	WireLib.CreateOutputs(self, {Scale = "Number"})
 
 	print("test")
+
+	self:UpdateOverlay()
+end
+
+function ENT:UpdateOverlay()
+	self:SetOverlayText("test")
+end
+
+function ENT:Think()
+	self:UpdateOverlay()
 end
