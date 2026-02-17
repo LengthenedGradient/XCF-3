@@ -48,9 +48,10 @@ function XCF.InitMenuReloadableBase(Panel, Command, CreateMenu)
 	return BasePanel
 end
 
-XCF.MainMenuTreeLookup = XCF.MainMenuTreeLookup or {}
-function XCF.AddMenuItem(Order, Name, Icon, Action, Parent, Disabled)
-	XCF.MainMenuTreeLookup[Name] = {
+XCF.MainMenuLookup = XCF.MainMenuLookup or {}
+--- Adds a menu item to the main menu lookup.
+function XCF.AddMenuItem(Order, Name, Icon, Action, Parent)
+	XCF.MainMenuLookup[Name] = {
 		Order = Order,
 		Name = Name,
 		Icon = Icon,
@@ -69,11 +70,11 @@ function XCF.CreateMainMenu(Menu)
 	local Clearable = Menu:AddPanel("XCF_Panel")
 
 	-- Build a forest from the flat lookup table (to deal with hot loading)
-	local lookup = table.Copy(XCF.MainMenuTreeLookup)
-	for _, node in pairs(lookup) do
-		if lookup[node.Parent] then
-			table.insert(lookup[node.Parent].Children, node)
-			table.sort(lookup[node.Parent].Children, function(a, b) return a.Order < b.Order end)
+	local Lookup = table.Copy(XCF.MainMenuLookup)
+	for _, node in pairs(Lookup) do
+		if Lookup[node.Parent] then
+			table.insert(Lookup[node.Parent].Children, node)
+			table.sort(Lookup[node.Parent].Children, function(a, b) return a.Order < b.Order end)
 		end
 	end
 
@@ -146,7 +147,7 @@ function XCF.CreateMainMenu(Menu)
 	end
 
 	-- Add all top-level nodes
-	for _, NodeData in ipairs(lookup.Base.Children) do
+	for _, NodeData in ipairs(Lookup.Base.Children) do
 		AddNodeWithChildren(Tree, Tree, NodeData):ExpandRecurse(true)
 	end
 
