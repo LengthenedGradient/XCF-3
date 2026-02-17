@@ -1,0 +1,1 @@
+XCF.AddMenuItem(2, "Contact", "icon16/feed.png", nil, "About")

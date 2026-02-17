@@ -48,6 +48,18 @@ function XCF.InitMenuReloadableBase(Panel, Command, CreateMenu)
 	return BasePanel
 end
 
+XCF.MainMenuTreeLookup = XCF.MainMenuTreeLookup or {}
+function XCF.AddMenuItem(Order, Name, Icon, Action, Parent)
+	XCF.MainMenuTreeLookup[Name] = {
+		Order = Order,
+		Name = Name,
+		Icon = Icon,
+		Action = Action,
+		Parent = Parent,
+		Children = {},
+	}
+end
+
 --- Creates the main menu for XCF given an existing XCF_Panel
 function XCF.CreateMainMenu(Menu)
 	-- Add test elements
@@ -56,74 +68,23 @@ function XCF.CreateMainMenu(Menu)
 
 	local Clearable = Menu:AddPanel("XCF_Panel")
 
-	TreeData = {
-		{
-			Name = "About", Icon = "icon16/information.png",
-			Children = {
-				{Name = "Updates", Icon = "icon16/newspaper.png"},
-				{Name = "Contact", Icon = "icon16/feed.png"},
-				{Name = "Wiki", Icon = "icon16/book_open.png"},
-			}
-		},
-		{
-			Name = "Entities", Icon = "icon16/brick.png",
-			Children = {
-				{
-					Name = "Weapons", Icon = "icon16/bomb.png", Children = {
-						{Name = "Guns", Icon = "icon16/gun.png"},
-						{Name = "Missiles", Icon = "icon16/wand.png"},
-					}
-				},
-				{
-					Name = "Mobility", Icon = "icon16/lorry.png", Children = {
-						{Name = "Engines", Icon = "icon16/car.png"},
-						{Name = "Gearboxes", Icon = "icon16/cog.png"},
-					}
-				},
-				{
-					Name = "Core", Icon = "icon16/heart.png", Children = {
-						{Name = "Baseplates", Icon = "icon16/shape_square.png"},
-						{Name = "Turrets", Icon = "icon16/shape_align_center.png"},
-						{Name = "Crew", Icon = "icon16/user_female.png"},
-						{Name = "Controllers", Icon = "icon16/controller.png"}
-					}
-				},
-				{
-					Name = "Peripherals", Icon = "icon16/drive.png", Children = {
-						{Name = "Sensors", Icon = "icon16/transmit.png"},
-						{Name = "Guidance", Icon = "icon16/joystick.png"},
-						{Name = "Refill", Icon = "icon16/arrow_refresh.png"},
-					},
-				},
-			}
-		},
-		{
-			Name = "Settings", Icon = "icon16/wrench_orange.png", Children = {
-				{Name = "Clientside Settings", Icon = "icon16/user.png"},
-				{Name = "Serverside Settings", Icon = "icon16/server.png"},
-			}
-		},
-		{
-			Name = "Permissions", Icon = "icon16/page_white_edit.png", Children = {
-				{Name = "Player Permissions", Icon = "icon16/group_edit.png"},
-				{Name = "Server Permissions", Icon = "icon16/server_edit.png"},
-			}
-		},
-		{
-			Name = "Tools", Icon = "icon16/wrench.png",
-			Children = {
-				{Name = "Safezones", Icon = "icon16/building_add.png"},
-				{Name = "Scanner", Icon = "icon16/magnifier.png"},
-				{Name = "Battle Logger", Icon = "icon16/chart_curve.png"},
-			}
-		},
-	}
+	-- Recursively build the forest
+	local lookup = table.Copy(XCF.MainMenuTreeLookup)
+	local tree = {}
+	for _, node in pairs(lookup) do
+		if lookup[node.Parent] then
+			table.insert(lookup[node.Parent].Children, node)
+			table.sort(lookup[node.Parent].Children, function(a, b) return a.Order < b.Order end)
+		else
+			-- No parent means it's a root node
+			table.insert(tree, node)
+		end
+	end
 
 	local function DefaultAction(Panel)
 		Panel:AddLabel("This menu has not been implemented yet.")
 	end
 
-	-- ExpandRecurse expands instantly, so this is less jarring.
 	-- TODO: Maybe BFS looks better than DFS?
 	local function ExpandRecurseSmooth(Node, Expand)
 		Node:SetExpanded(Expand)
@@ -203,7 +164,7 @@ function XCF.CreateMainMenu(Menu)
 	end
 
 	-- Add all top-level nodes
-	for _, NodeData in ipairs(TreeData) do
+	for _, NodeData in ipairs(lookup.Base.Children) do
 		AddNodeWithChildren(Tree, Tree, NodeData):ExpandRecurse(true)
 	end
 end

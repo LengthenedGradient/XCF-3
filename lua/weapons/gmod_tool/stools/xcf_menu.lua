@@ -7,5 +7,3 @@ if CLIENT then
 		Panel:AddItem(BasePanel)
 	end
 end
-
-XCF.RegisterToolFunctions(TOOL)

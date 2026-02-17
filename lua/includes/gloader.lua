@@ -27,6 +27,7 @@ SOFTWARE.
 ]]
 
 -- TODO: finish documenting this file
+-- Folders with the name "core" will be loaded before any other folders
 local session = SERVER and "server" or "client"
 local suffix  = "_([cs][lvh])[.lua]*$" 								-- Match _cl, _sv, _sh
 local realms  = { cl = "client", sv = "server", sh = "shared", }	-- Map _cl.lua -> client, _sv.lua -> server, _sh.lua -> shared

@@ -1,0 +1,1 @@
+XCF.AddMenuItem(1, "Updates", "icon16/newspaper.png", nil, "About")
