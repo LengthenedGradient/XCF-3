@@ -1,4 +1,4 @@
-local XCF = XCF
+-- local XCF = XCF
 
 do -- Player loaded hook
 	-- PlayerInitialSpawn isn't reliable when it comes to network messages

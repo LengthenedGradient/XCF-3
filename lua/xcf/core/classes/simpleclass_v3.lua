@@ -16,6 +16,7 @@
 local Classes = {} --- A mapping from a class' ID to its table
 local Queued = {} -- A mapping from a class' ID to a (mapping from its children's IDs to their tables)
 
+--- TODO: Determine if BaseID Still needed
 --- Initializes a class by adding its metatable and running callbacks/hooks.
 --- Recursively initializes children waiting on this class
 --- This is called when a class and its parent are both initialized
@@ -23,7 +24,7 @@ local Queued = {} -- A mapping from a class' ID to a (mapping from its children'
 --- @param NewClass table The class table of the class
 --- @param BaseID string The ID of the base class
 --- @param BaseClass table The class table of the base class
-local function InitializeClass(ID,NewClass,BaseID,BaseClass)
+local function InitializeClass(ID, NewClass, _, BaseClass)
 	local ClassMeta = {
 		__index = BaseClass, -- If I don't have it, check my super (inheritance)
 		__tostring = function(self) return "Class (" .. self.ID .. ")" end,

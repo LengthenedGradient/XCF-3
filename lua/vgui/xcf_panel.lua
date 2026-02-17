@@ -1,5 +1,5 @@
 local PANEL     = {}
-local XCF       = XCF
+-- local XCF       = XCF
 
 DEFINE_BASECLASS("Panel")
 

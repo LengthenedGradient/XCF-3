@@ -42,7 +42,7 @@ function XCF.RegisterToolFunctions(Tool)
 		-- print("drawing hud")
 	end
 
-	function Tool:DrawToolScreen(width, height)
+	function Tool:DrawToolScreen(_, _)
 		-- print("drawing world")
 	end
 end
