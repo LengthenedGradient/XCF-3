@@ -26,25 +26,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ]]
 
+-- TODO: finish documenting this file
 local session = SERVER and "server" or "client"
-local suffix  = "_([cs][lvh])[.lua]*$"
-local realms  = { cl = "client", sv = "server", sh = "shared", }
+local suffix  = "_([cs][lvh])[.lua]*$" 								-- Match _cl, _sv, _sh
+local realms  = { cl = "client", sv = "server", sh = "shared", }	-- Map _cl.lua -> client, _sv.lua -> server, _sh.lua -> shared
 local loaders = {
 	client = function(path)
 		if CLIENT then
-			include(path)
+			include(path) -- Include the file on the client
 		else
-			AddCSLuaFile(path)
+			AddCSLuaFile(path) -- Send file to clients from the server
 		end
 	end,
 	server = function(path)
 		if CLIENT then return end
 
-		include(path)
+		include(path) -- Include the file on the server
 	end,
 	shared = function(path)
-		AddCSLuaFile(path)
-		include(path)
+		AddCSLuaFile(path) -- Send file to clients from the server
+		include(path) -- Include the file on the server
 	end,
 }
 
@@ -56,6 +57,7 @@ local function canLoad(realm)
 	return realm == session
 end
 
+-- Returns the realm of a file given its path
 local function getRealm(path)
 	local realm = path:match(suffix)
 
@@ -159,6 +161,7 @@ local function loadFiles(library, context)
 	return fileCount, folderCount
 end
 
+-- Prepares and loads the addon
 local function loadAddon(name, folder)
 	local context = _G[name] or {}
 	local library = { folders = {}, files = {}, }
@@ -179,6 +182,8 @@ local function loadAddon(name, folder)
 	hook.Run(name .. "_OnLoadAddon", context)
 end
 
+-- Loads the addon and defines a command to reload it
+-- Called in autorun: "gloader.Load("XCF", "xcf")"
 function Load(name, folder)
 	if not isstring(name) then return end
 	if not isstring(folder) then return end

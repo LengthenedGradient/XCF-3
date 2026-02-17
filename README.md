@@ -1,5 +1,5 @@
 # Extendable Combat Framework
-Experimental recode of [ACF-3](https://github.com/ACF-Team/ACF-3) with a focus on code structure and maintainability.
+Experimental recode of [ACF-3](https://github.com/ACF-Team/ACF-3) with a focus on code structure, readability and maintainability.
 
 It is intended for things to change as development happens.
 
