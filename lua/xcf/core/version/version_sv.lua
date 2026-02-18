@@ -13,7 +13,7 @@ local function GitDateToEpoch(dateStr)
     })
 end
 
---- Fetch latest commit for a given repo and branch
+--- Get information about the latest commit for a given repo and branch
 --- Example usage: lua_run XCF.GetLatestCommit("horizon-technologies", "XCF-3", "main", function(_, commit) PrintTable(commit) end)
 function XCF.GetLatestCommit(owner, repo, branch, callback)
     local url = ("https://api.github.com/repos/%s/%s/commits?per_page=1&sha=%s"):format(owner, repo, branch)
@@ -36,6 +36,38 @@ function XCF.GetLatestCommit(owner, repo, branch, callback)
                 author     = raw.commit.author.name,
                 date       = GitDateToEpoch(raw.commit.author.date),
                 url        = raw.html_url
+            }
+
+            callback(true, commit)
+        end,
+        failed = function(err)
+            print("HTTP failed:", err)
+            callback(false)
+        end
+    })
+end
+
+--- Get information about a specific commit by SHA
+--- Example usage: lua_run XCF.GetCommit("horizon-technologies", "XCF-3", "abc1234", function(success, commit) PrintTable(commit) end)
+function XCF.GetCommit(owner, repo, sha, callback)
+    local url = ("https://api.github.com/repos/%s/%s/commits/%s"):format(owner, repo, sha)
+
+    HTTP({
+        url = url,
+        method = "GET",
+        success = function(_, body)
+            local data = util.JSONToTable(body)
+            if not data or not data.commit then
+                callback(false)
+                return
+            end
+
+            local commit = {
+                short_sha  = data.sha:sub(1, 7),
+                message    = data.commit.message,
+                author     = data.commit.author.name,
+                date       = GitDateToEpoch(data.commit.author.date),
+                url        = data.html_url
             }
 
             callback(true, commit)
