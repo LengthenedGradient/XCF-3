@@ -1,5 +1,3 @@
-local XCF = XCF
-
 XCF.AddMenuItem(1, "Base", nil, nil, nil)
 
 XCF.AddMenuItem(1, "About", "icon16/information.png", nil, "Base")
