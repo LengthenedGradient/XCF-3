@@ -95,6 +95,7 @@ function ENT:Think(...)
 end
 
 do -- Size and scale setter methods
+	--- Sets the scale of the entity on the client
 	function ENT:ResizeEntity(Scale)
 		local Data = self.XCFScaleData
 		Data.Size = Data.OriginalSize * Scale

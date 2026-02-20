@@ -1,3 +1,4 @@
+-- TODO: entities whos scale is set seem to have very high drag...
 DEFINE_BASECLASS("base_wire_entity") -- Use wiremod's base entity for easy wiremod integration
 
 AddCSLuaFile("shared.lua") -- Send shared and cl_init to the client
