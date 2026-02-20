@@ -9,70 +9,61 @@ util.AddNetworkString "XCF_Scalable_Entity"
 
 local ModelData = XCF.ModelData
 
--- Transmits a scalable entity's scale and model info to a specific player or all players
-local function TransmitScaleInfo(Entity, To)
-	local Data  = Entity.XCFScaleData
-	local Scale = Data.Scale
+do -- Networking related
+	-- Transmits a scalable entity's scale and model
+	local function TransmitScaleInfo(Entity, To)
+		local Data  = Entity.XCFScaleData
+		local Scale = Data.Scale
 
-	net.Start("XCF_Scalable_Entity")
-	net.WriteUInt(Entity:EntIndex(), MAX_EDICT_BITS)
-	net.WriteFloat(Scale[1])
-	net.WriteFloat(Scale[2])
-	net.WriteFloat(Scale[3])
-	net.WriteString(Data.ModelPath)
+		net.Start("XCF_Scalable_Entity")
+		net.WriteUInt(Entity:EntIndex(), MAX_EDICT_BITS)
+		net.WriteFloat(Scale[1])
+		net.WriteFloat(Scale[2])
+		net.WriteFloat(Scale[3])
+		net.WriteString(Data.ModelPath)
 
-	if To then net.Send(To) else net.Broadcast() end
-end
-
-function ENT:TransmitScaleInfo(To)
-	TransmitScaleInfo(self, To)
-end
-
-net.Receive("XCF_Scalable_Entity", function(_, Player)
-	local Entity = ents.GetByIndex(net.ReadUInt(MAX_EDICT_BITS)) -- Equivalent to Entity()
-
-	if IsValid(Entity) and Entity.XCFIsScalable then
-		TransmitScaleInfo(Entity, Player)
+		if To then net.Send(To) else net.Broadcast() end
 	end
-end)
+
+	function ENT:TransmitScaleInfo(To)
+		TransmitScaleInfo(self, To)
+	end
+
+	--- If the client requests scale info, send it
+	net.Receive("XCF_Scalable_Entity", function(_, Player)
+		local Entity = ents.GetByIndex(net.ReadUInt(MAX_EDICT_BITS)) -- Equivalent to Entity()
+
+		if IsValid(Entity) and Entity.XCFIsScalable then
+			TransmitScaleInfo(Entity, Player)
+		end
+	end)
+end
 
 do -- Size and scale setter methods
-	local function ResizeEntity(Entity, Scale)
-		local Data = Entity.XCFScaleData
+	--- Sets the scale of the entity on the server
+	--- Internally updates the physics mesh and transmits the change to the clients
+	function ENT:ResizeEntity(Scale)
+		local Data = self.XCFScaleData
 		Data.Size = Data.OriginalSize * Scale
 		Data.Scale = Scale
 
 		local Mesh = ModelData.GetModelMesh(Data.ModelPath, Scale)
 
-		Entity:PhysicsInitMultiConvex(Mesh)
-		Entity:SetMoveType(MOVETYPE_VPHYSICS)
-		Entity:SetSolid(SOLID_VPHYSICS)
-		Entity:EnableCustomCollisions(true)
-		Entity:DrawShadow(false)
+		self:PhysicsInitMultiConvex(Mesh)
+		self:SetMoveType(MOVETYPE_VPHYSICS)
+		self:SetSolid(SOLID_VPHYSICS)
+		self:EnableCustomCollisions(true)
+		self:DrawShadow(false)
 
-		local PhysObj = Entity:GetPhysicsObject()
+		local PhysObj = self:GetPhysicsObject()
 
-		TransmitScaleInfo(Entity)
+		self:TransmitScaleInfo()
 
 		if IsValid(PhysObj) then
 			PhysObj:EnableMotion(false)
 		end
 
 		return PhysObj
-	end
-
-	function ENT:SetSize(Size)
-		if not Size then return false end
-
-		local Scale = Size / self.XCFScaleData.OriginalSize
-
-		return ResizeEntity(self, Scale)
-	end
-
-	function ENT:SetScale(Scale)
-		if not Scale then return false end
-
-		return ResizeEntity(self, Scale)
 	end
 end
 
