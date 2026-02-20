@@ -4,6 +4,7 @@ local function CreateFateCubeMenu(MenuPanel)
 	MenuPanel:AddCheckbox("Test Checkbox", function(_, Val) print("Checkbox Changed:", Val) end)
 
 	local Base = MenuPanel:AddCollapsible("Settings")
+	Base:AddPresetsBar()
 	Base:AddModelPrevew("models/hunter/blocks/cube075x075x075.mdl")
 	Base:AddSlider("Volatility", 0, 1, 2)
 	Base:AddNumberWang("Type", 0, 10)

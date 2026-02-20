@@ -142,6 +142,7 @@ function PANEL:AddComboBox()
 	Panel:SetSortItems(false)
 	Panel:SetDark(true)
 	Panel:SetWrap(true)
+	return Panel
 end
 
 function PANEL:AddCollapsible(Text, State)
@@ -155,7 +156,7 @@ function PANEL:AddCollapsible(Text, State)
 	Category:DoExpansion(State)
 
 	local Base = vgui.Create("XCF_Panel")
-	Base:DockMargin(5, 5, 5, 10)
+	Base:DockMargin(5, 5, 5, 5)
 
 	Category:SetContents(Base)
 
@@ -168,6 +169,42 @@ function PANEL:AddTextEntry(Placeholder)
 	Panel:SetPlaceholderText(Placeholder)
 
 	return Panel
+end
+
+-- Similar to ControlPresets derma panel, but for XCF.
+-- Reference: https://github.com/Facepunch/garrysmod/blob/master/garrysmod/gamemodes/sandbox/gamemode/spawnmenu/controls/control_presets.lua
+function PANEL:AddPresetsBar()
+	local Box = self:Add("DPanel")
+	Box:Dock(TOP)
+	Box:SetTall(20)
+	Box:DockMargin(0, 0, 0, 10)
+
+	local Dropdown = vgui.Create("DComboBox", Box)
+	Dropdown:Dock(FILL)
+
+	local RemoveButton = vgui.Create("DImageButton", Box)
+	RemoveButton:Dock(RIGHT)
+	RemoveButton:SetTooltip("Remove preset")
+	RemoveButton:SetImage("icon16/delete.png")
+	RemoveButton:SetStretchToFit(false)
+	RemoveButton:SetSize(20, 20)
+	RemoveButton:DockMargin(0, 0, 0, 0)
+
+	RemoveButton.DoClick = function()
+		print("remove")
+	end
+
+	local SaveButton = vgui.Create("DImageButton", Box)
+	SaveButton:Dock(RIGHT)
+	SaveButton:SetTooltip("Save preset")
+	SaveButton:SetImage("icon16/add.png")
+	SaveButton:SetStretchToFit(false)
+	SaveButton:SetSize(20, 20)
+	SaveButton:DockMargin(2, 0, 0, 0)
+
+	SaveButton.DoClick = function()
+		print("save")
+	end
 end
 
 -- TODO: Add more options etc.
