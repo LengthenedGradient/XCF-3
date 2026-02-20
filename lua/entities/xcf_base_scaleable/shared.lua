@@ -6,3 +6,5 @@ ENT.WireDebugName  = "XCF base scalable entity"
 ENT.Spawnable = true
 ENT.Category = "Other"
 ENT.Author = "XCF Team"
+
+ENT.IsScalable = true
