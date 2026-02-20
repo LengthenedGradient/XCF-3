@@ -2,8 +2,6 @@
 local XCF       = XCF
 XCF.ModelData = XCF.ModelData or {}
 local ModelData = XCF.ModelData
-local isnumber  = isnumber
-local isvector  = isvector
 local isstring  = isstring
 local IsUseless = IsUselessModel
 
