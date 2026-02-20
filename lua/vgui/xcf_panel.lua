@@ -48,6 +48,15 @@ function PANEL:AddMenuReload(Command)
 end
 
 -- Default Elements
+function PANEL:AddTitle(Text)
+	local Panel = self:AddPanel("DLabel")
+	Panel:SetText(Text or "Title")
+	Panel:SetFont("XCF_Title")
+	Panel:SetDark(true)
+
+	return Panel
+end
+
 function PANEL:AddLabel(Text)
 	local Panel = self:AddPanel("DLabel")
 	Panel:SetAutoStretchVertical(true)
@@ -59,11 +68,12 @@ function PANEL:AddLabel(Text)
 	return Panel
 end
 
-function PANEL:AddTitle(Text)
-	local Panel = self:AddPanel("DLabel")
-	Panel:SetText(Text or "Title")
-	Panel:SetFont("XCF_Title")
-	Panel:SetDark(true)
+function PANEL:AddHelp(Text)
+	local TextColor = self:GetSkin().Colours.Tree.Hover
+	local Panel = self:AddLabel(Text)
+	Panel:DockMargin(10, 0, 10, 10)
+	Panel:SetTextColor(TextColor)
+	Panel:InvalidateLayout()
 
 	return Panel
 end
@@ -126,6 +136,14 @@ function PANEL:AddNumberWang(Label, Min, Max, Decimals)
 	return Wang, Text
 end
 
+function PANEL:AddComboBox()
+	local Panel = self:AddPanel("DComboBox")
+	Panel:SetFont("XCF_Control")
+	Panel:SetSortItems(false)
+	Panel:SetDark(true)
+	Panel:SetWrap(true)
+end
+
 function PANEL:AddCollapsible(Text, State)
 	if State == nil then State = true end
 
@@ -152,14 +170,7 @@ function PANEL:AddTextEntry(Placeholder)
 	return Panel
 end
 
-function PANEL:AddComboBox()
-	local Panel = self:AddPanel("DComboBox")
-	Panel:SetFont("XCF_Control")
-	Panel:SetSortItems(false)
-	Panel:SetDark(true)
-	Panel:SetWrap(true)
-end
-
+-- TODO: Add more options etc.
 function PANEL:AddModelPrevew(Model, _)
 	local ModelPanel    = self:AddPanel("DModelPanel")
 
@@ -198,6 +209,8 @@ function PANEL:AddVec3Slider(Title)
 
 	return X, Y, Z
 end
+
+-- TODO: Add graph element
 
 -- Must be after methods are attached to the PANEL table.
 derma.DefineControl("XCF_Panel", "", PANEL, "Panel")
