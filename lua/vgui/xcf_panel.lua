@@ -34,6 +34,19 @@ function PANEL:PerformLayout()
 	self:SizeToChildren(true, true)
 end
 
+-- Core Elements
+function PANEL:AddMenuReload(Command)
+	local Reload = self:AddButton("Reload Menu")
+	local ReloadDesc = language.GetPhrase("You can type %s in console."):format(Command)
+	Reload:SetTooltip(ReloadDesc)
+
+	function Reload:DoClickInternal()
+		RunConsoleCommand(Command)
+	end
+
+	return Reload
+end
+
 -- Default Elements
 function PANEL:AddLabel(Text)
 	local Panel = self:AddPanel("DLabel")
@@ -59,6 +72,7 @@ function PANEL:AddButton(Text, OnClick)
 	local Panel = self:AddPanel("DButton")
 	Panel:SetText(Text or "Button")
 	Panel:SetFont("XCF_Control")
+	Panel:SetDark(true)
 	if OnClick then
 		Panel.DoClick = OnClick
 	end
@@ -70,6 +84,7 @@ function PANEL:AddCheckbox(Text, OnChange)
 	local Panel = self:AddPanel("DCheckBoxLabel")
 	Panel:SetText(Text or "Checkbox")
 	Panel:SetFont("XCF_Control")
+	Panel:SetDark(true)
 	if OnChange then
 		Panel.OnChange = OnChange
 	end
@@ -77,17 +92,111 @@ function PANEL:AddCheckbox(Text, OnChange)
 	return Panel
 end
 
--- Core elements
-function PANEL:AddMenuReload(Command)
-	local Reload = self:AddButton("Reload Menu")
-	local ReloadDesc = language.GetPhrase("You can type %s in console."):format(Command)
-	Reload:SetTooltip(ReloadDesc)
+function PANEL:AddSlider(Title, Min, Max, Decimals)
+	local Panel = self:AddPanel("DNumSlider")
+	Panel:DockMargin(0, 0, 0, 5)
+	Panel:SetDecimals(Decimals or 0)
+	Panel:SetText(Title or "")
+	if Min and Max then
+		Panel:SetMinMax(Min, Max)
+	end
+	Panel:SetValue(Min)
+	Panel:SetDark(true)
 
-	function Reload:DoClickInternal()
-		RunConsoleCommand(Command)
+	Panel.Label:SetFont("XCF_Control")
+
+	return Panel
+end
+
+function PANEL:AddNumberWang(Label, Min, Max, Decimals)
+	local Base = self:AddPanel("XCF_Panel")
+
+	local Wang = Base:Add("DNumberWang")
+	Wang:SetDecimals(Decimals or 0)
+	Wang:SetMinMax(Min, Max)
+	Wang:SetTall(20)
+	Wang:Dock(RIGHT)
+
+	local Text = Base:Add("DLabel")
+	Text:SetText(Label or "Text")
+	Text:SetFont("XCF_Control")
+	Text:SetDark(true)
+	Text:Dock(TOP)
+
+	return Wang, Text
+end
+
+function PANEL:AddCollapsible(Text, State)
+	if State == nil then State = true end
+
+	local Category = self:AddPanel("DCollapsibleCategory")
+	Category:SetLabel(Text or "Title")
+	Category.Header:SetFont("XCF_Title")
+	Category.Header:SetSize(0, 24)
+
+	Category:DoExpansion(State)
+
+	local Base = vgui.Create("XCF_Panel")
+	Base:DockMargin(5, 5, 5, 10)
+
+	Category:SetContents(Base)
+
+	return Base, Category
+end
+
+function PANEL:AddTextEntry(Placeholder)
+	local Panel = self:AddPanel("DTextEntry")
+	Panel:SetFont("XCF_Control")
+	Panel:SetPlaceholderText(Placeholder)
+
+	return Panel
+end
+
+function PANEL:AddComboBox()
+	local Panel = self:AddPanel("DComboBox")
+	Panel:SetFont("XCF_Control")
+	Panel:SetSortItems(false)
+	Panel:SetDark(true)
+	Panel:SetWrap(true)
+end
+
+function PANEL:AddModelPrevew(Model, _)
+	local ModelPanel    = self:AddPanel("DModelPanel")
+
+	function ModelPanel:UpdateModel(Model)
+		self:SetModel(Model)
+		local Entity = self:GetEntity()
+		if not IsValid(Entity) then return end
+
+		-- local Min, Max = Entity:GetRenderBounds()
+		-- local Size = Max - Min
+		-- local Distance = Size:Length() * 1.5
+		-- self:SetCamPos(Vector(Distance, Distance, Distance))
+		-- self:SetLookAt((Min + Max) * 0.5)
 	end
 
-	return Reload
+	ModelPanel:SetModel(Model)
+	ModelPanel:SetSize(200, 200)
+	ModelPanel:SetCamPos(Vector(-100, 0, 0))
+	ModelPanel:SetLookAt(Vector(0, 0, 0))
+
+	function ModelPanel:PaintOver( w, h )
+		surface.SetDrawColor(255, 255, 255, 255)
+		surface.DrawOutlinedRect(0, 0, w, h, 5)
+	end
+
+	return ModelPanel
+end
+
+-- Multi Elements
+function PANEL:AddVec3Slider(Title)
+	local Base = self:AddPanel("XCF_Panel")
+
+	local X = Base:AddSlider(Title .. " X", 0, 2, 2)
+	local Y = Base:AddSlider(Title .. " Y", 0, 2, 2)
+	local Z = Base:AddSlider(Title .. " Z", 0, 2, 2)
+
+	return X, Y, Z
 end
 
 -- Must be after methods are attached to the PANEL table.

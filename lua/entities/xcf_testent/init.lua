@@ -8,14 +8,14 @@ include("shared.lua") -- This runs shared.lua on the server
 
 -- This code runs whenever the entity is created.
 function ENT:Initialize()
-	self:SetScaledModel("models/props_c17/oildrum001_explosive.mdl")
+	self:SetScaledModel("models/hunter/blocks/cube075x075x075.mdl")
 
 	self:PhysicsInit(SOLID_VPHYSICS)
 	self:SetMoveType(MOVETYPE_VPHYSICS)
 	self:SetSolid(SOLID_VPHYSICS)
 
-	WireLib.CreateInputs(self, {Scale = "Number"})
-	WireLib.CreateOutputs(self, {Scale = "Number"})
+	WireLib.CreateInputs(self, {Roll = "Number"})
+	WireLib.CreateOutputs(self, {State = "Number", Col = "Vector"})
 
 	self:UpdateOverlay()
 end
