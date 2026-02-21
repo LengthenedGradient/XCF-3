@@ -192,7 +192,7 @@ end
 do -- Handling persistence across sessions through file storage (for presets / server settings)
 	local BasePath = "xcf/"
 
-	function EnsureFileAndDirectoryExists(BasePath, FileName)
+	function XCF.EnsureFileAndDirectoryExists(BasePath, FileName)
 		local DirExists = file.Exists(BasePath, "DATA")
 		if not DirExists then
 			file.CreateDir(BasePath)
@@ -204,8 +204,8 @@ do -- Handling persistence across sessions through file storage (for presets / s
 		end
 	end
 
-	if SERVER then EnsureFileAndDirectoryExists(BasePath, "persistence_sv.txt") end
-	if CLIENT then EnsureFileAndDirectoryExists(BasePath, "persistence_cl.txt") end
+	if SERVER then XCF.EnsureFileAndDirectoryExists(BasePath, "persistence_sv.txt") end
+	if CLIENT then XCF.EnsureFileAndDirectoryExists(BasePath, "persistence_cl.txt") end
 
 	--- Load data vars from a file into the local player / server
 	--- Only loads variables from the group that are specified in the file
