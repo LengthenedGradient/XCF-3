@@ -61,7 +61,7 @@ print("XCF: Listen server mode is " .. tostring(XCF.IsListenServer))
 
 local XCF_DATA_VAR_LIMIT_EXPONENT = 8 -- Maximum number of data vars allowed as an exponent of 2
 local XCF_DATA_VAR_MAX_MESSAGE_SIZE = 128 -- Maximum size of a data var message in bytes
-local ServerPlayer = "Server" -- Represents the server as if it were a player (technically this should be a player entity, but the server doesn't have one.)
+local ServerString = "Server" -- Represents the server as if it were a player (technically this should be a player entity, but the server doesn't have one.)
 
 if SERVER then util.AddNetworkString("XCF_DV_NET") end
 
@@ -71,27 +71,28 @@ if SERVER then util.AddNetworkString("XCF_DV_NET") end
 --- Target is either a player (client data), or nil (server data)
 function XCF.SetDataVar(Key, Value, Target)
 	local DataVar = XCF.DataVars[Key]
-	local Player = Target or ServerPlayer -- Player entity, or the server string
-	local ForServer = Player == ServerPlayer -- Are we trying to change the server's data or the client's?
-	if not ForServer and not IsValid(Player) then error("XCF: Invalid player in SetDataVar") return end -- Invalid player, ignore
+	local Player = Target or ServerString -- Player entity, or the server string
+	local ForServerData = Player == ServerString -- Are we trying to change the server's data or the client's?
+	if not ForServerData and not IsValid(Player) then error("XCF: Invalid player in SetDataVar") return end -- Invalid player, ignore
 	if DataVar.Values[Player] ~= Value then
 		DataVar.Values[Player] = Value
 
 		net.Start("XCF_DV_NET")
 		net.WriteUInt(DataVar.UUID, XCF_DATA_VAR_LIMIT_EXPONENT) -- Encoded Key
-		net.WriteBool(ForServer)
+		net.WriteBool(ForServerData)
 
 		DataVar.Type.Write(Value)
 
 		if SERVER then
 			-- Broadcast server change to all clients / Network client change to a single client
-			if ForServer then net.Broadcast()
+			if ForServerData then
+				net.Broadcast()
 			else
 				if XCF.IsListenServer then net.Broadcast() -- Need to do this for loopback servers
 				else net.Send(Player) end
 			end
 		elseif CLIENT then
-			-- Network server / client change to server (authorized on receive)
+			-- Network server / client change to server
 			net.SendToServer()
 		end
 	end
@@ -109,14 +110,14 @@ net.Receive("XCF_DV_NET", function(len, ply)
 	local DataVar = XCF.DataVars[Key]
 	if not DataVar then return end -- Invalid DataVar, ignore
 
-	local ForServer = net.ReadBool() -- Are we trying to change the server's data or the client's?
+	local ForServerData = net.ReadBool() -- Are we trying to change the server's data or the client's?
 
 	local Player
-	if SERVER then Player = ForServer and ServerPlayer or ply -- Server receives have a ply argument
-	else Player = ForServer and ServerPlayer or LocalPlayer() end -- Client receives don't have a ply argument
+	if SERVER then Player = ForServerData and ServerString or ply -- Server receives have a ply argument
+	else Player = ForServerData and ServerString or LocalPlayer() end -- Client receives don't have a ply argument
 
 	-- Only authorized users can set server's server data
-	if SERVER and ForServer and not XCF.CanSetServerData(ply) then return end
+	if SERVER and ForServerData and not XCF.CanSetServerData(ply) then return end
 	DataVar.Values[Player] = DataVar.Type.Read()
 end)
 
