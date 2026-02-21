@@ -160,7 +160,8 @@ do -- Managing data variable synchronization and networking
 		if CLIENT then Player = LocalPlayer() end
 		local DataVar = XCF.DataVars[Key]
 		if not DataVar then return end
-		return DataVar.Values[Player] or (IgnoreDefaults and nil or DataVar.Default)
+		if not IgnoreDefaults and DataVar.Values[Player] == nil then return DataVar.Default end
+		return DataVar.Values[Player]
 	end
 
 	--- Returns the value of a server data variable
@@ -168,8 +169,11 @@ do -- Managing data variable synchronization and networking
 	function XCF.GetServerData(Key, _, IgnoreDefaults)
 		local DataVar = XCF.DataVars[Key]
 		if not DataVar then return end
-		return DataVar.Values[ServerKey] or (IgnoreDefaults and nil or DataVar.Default)
+		if not IgnoreDefaults and DataVar.Values[ServerKey] == nil then return DataVar.Default end
+		return DataVar.Values[ServerKey]
 	end
+
+	--- TODO: Rename these to make their synchronization purpose clearer
 
 	--- Helper that assumes server realm on the server or the local player on the client
 	function XCF.GetSharedData(Key, IgnoreDefaults)
@@ -184,29 +188,43 @@ do -- Managing data variable synchronization and networking
 	end
 end
 
+-- TODO: Handle automatic persistence and queueing over time. Also have a variable specify if it should be saved on a given realm.
 do -- Handling persistence across sessions through file storage (for presets / server settings)
-	local BasePath = "xcf_data_vars/"
+	local BasePath = "xcf/"
 
-	-- STILL WIP
+	function EnsureFileAndDirectoryExists(BasePath, FileName)
+		local DirExists = file.Exists(BasePath, "DATA")
+		if not DirExists then
+			file.CreateDir(BasePath)
+		end
+
+		local FileExists = file.Exists(BasePath .. FileName, "DATA")
+		if not FileExists then
+			file.Write(BasePath .. FileName, "")
+		end
+	end
+
+	if SERVER then EnsureFileAndDirectoryExists(BasePath, "persistence_sv.txt") end
+	if CLIENT then EnsureFileAndDirectoryExists(BasePath, "persistence_cl.txt") end
 
 	--- Load data vars from a file into the local player / server
-	function XCF.LoadDataVarsFromFile(SubPath, Group)
-		local Path = BasePath .. SubPath
+	--- Only loads variables from the group that are specified in the file
+	function XCF.LoadDataVarsFromFile(Name, Group)
+		local Path = BasePath .. Name .. ".txt"
 		if not file.Exists(Path, "DATA") then return end
 
 		local Data = util.JSONToTable(file.Read(Path, "DATA"))
 		if not Data then return end
 
 		for Name, _ in pairs(XCF.DataVarGroups[Group] or {}) do
-			if Data[Name] ~= nil then
-				XCF.SetSharedData(Name, Data[Name])
-			end
+			if Data[Name] ~= nil then XCF.SetSharedData(Name, Data[Name]) end
 		end
 	end
 
 	--- Save data vars to a file from the local player / server.
-	function XCF.SaveDataVarsToFile(SubPath, Group)
-		local Path = BasePath .. SubPath
+	--- Only saves variables from the group that have been set
+	function XCF.SaveDataVarsToFile(Name, Group)
+		local Path = BasePath .. Name .. ".txt"
 		local Data = {}
 
 		-- Implicitly avoids saving any variables that aren't defined in the group (key = nil)
@@ -214,8 +232,6 @@ do -- Handling persistence across sessions through file storage (for presets / s
 			local DataVar = XCF.DataVars[Name]
 			if DataVar then Data[Name] = XCF.GetSharedData(Name, true) end
 		end
-
-		-- print(util.TableToJSON(Data, true))
 
 		file.Write(Path, util.TableToJSON(Data, true))
 	end
