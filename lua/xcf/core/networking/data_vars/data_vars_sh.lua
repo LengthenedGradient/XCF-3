@@ -37,13 +37,15 @@ function XCF.DefineDataVar(Name, Group, Type, Default, Options)
 	return XCF.DataVars[Name]
 end
 
+------------------------------------------------------------------------------------------------
+
 --- Returns whether a client is allowed to set a server datavars
 function XCF.CanSetServerData(Player)
 	if not IsValid(Player) then return true end -- No player, probably the server
 	if Player:IsSuperAdmin() then return true end
 
 	-- TODO: implement this
-	return XCF.GetServerBool("ServerDataAllowAdmin") and Player:IsAdmin()
+	return XCF.GetServerData("ServerDataAllowAdmin") and Player:IsAdmin()
 end
 
 -- Determine if we're on a listen server once a player joins
@@ -185,6 +187,8 @@ if SERVER then
 	end)
 end
 
+---------------------------------------------------------------------------------------------
+
 --- Load data vars from a file. Used for persistent data on client/server and presets on client
 -- function XCF.LoadDataVarsFromFile(Path, TargetPlayer, Filter) end
 
@@ -199,15 +203,16 @@ XCF.DefineDataVarType("String",      net.ReadString,      net.WriteString)
 XCF.DefineDataVarType("Float",       net.ReadFloat,       net.WriteFloat)
 XCF.DefineDataVarType("Double",      net.ReadDouble,      net.WriteDouble)
 
--- Signed integers
-XCF.DefineDataVarType("Int8",        function() return net.ReadInt(8)  end,  function(v) net.WriteInt(v, 8)  end)
-XCF.DefineDataVarType("Int16",       function() return net.ReadInt(16) end,  function(v) net.WriteInt(v, 16) end)
-XCF.DefineDataVarType("Int32",       function() return net.ReadInt(32) end,  function(v) net.WriteInt(v, 32) end)
+-- Signed integers (1 to 32 bits)
+for i = 1, 32 do
+	XCF.DefineDataVarType("Int" .. i, function() return net.ReadInt(i)  end,  function(v) net.WriteInt(v, i)  end)
+end
 
--- Unsigned integers
-XCF.DefineDataVarType("UInt8",       function() return net.ReadUInt(8)  end, function(v) net.WriteUInt(v, 8)  end)
-XCF.DefineDataVarType("UInt16",      function() return net.ReadUInt(16) end, function(v) net.WriteUInt(v, 16) end)
-XCF.DefineDataVarType("UInt32",      function() return net.ReadUInt(32) end, function(v) net.WriteUInt(v, 32) end)
+-- Unsigned integers (1 to 32 bits)
+for i = 1, 32 do
+	XCF.DefineDataVarType("UInt" .. i, function() return net.ReadUInt(i) end,  function(v) net.WriteUInt(v, i) end)
+end
+
 
 -- Others
 XCF.DefineDataVarType("Color",       net.ReadColor,       net.WriteColor)
@@ -224,3 +229,5 @@ XCF.DefineDataVarType("Bit",         net.ReadBit,         net.WriteBit)
 
 -- Test variable
 XCF.DefineDataVar("TestVar", "TestGroup", XCF.DataVarTypes.String)
+
+XCF.DefineDataVar("ServerDataAllowAdmin", "ServerSettings", XCF.DataVarTypes.Bool, false)
