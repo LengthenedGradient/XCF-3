@@ -3,16 +3,14 @@ local XCF = XCF
 -- TODO: Maybe consider using group as a scope to avoid name conflicts?
 -- TODO: determine if there are looping issues with the menu
 
+-- TODO: make data vars indexed by uuid, since name and group are used to avoid naming conflicts but we may want to search by group or name separately.
+
 do -- Macros for defining data variables and their types
 	XCF.DataVarTypes = XCF.DataVarTypes or {} -- Maps type names to type definitions
-	XCF.DataVars = XCF.DataVars or {} -- Maps variable names to variable definitions
-	XCF.DataVarIDsToNames = XCF.DataVarIDsToNames or {} -- Maps variable UUIDs to their names for reverse lookup on receive
-	XCF.DataVarGroups = XCF.DataVarGroups or {} -- Maps group names to lists of variable names
-	XCF.DataVarGroupsOrdered = XCF.DataVarGroupsOrdered or {} -- Maps group names to lists of variable names
 
-	local TypeCounter = 0
+	local TypeCounter = 1
 	function XCF.DefineDataVarType(Name, ReadFunc, WriteFunc, Options)
-		XCF.DataVarTypes[Name] = {
+		local NewDataVarType = {
 			Name = Name,
 			UUID = TypeCounter,
 			Read = ReadFunc,
@@ -20,29 +18,34 @@ do -- Macros for defining data variables and their types
 			Options = Options,
 		}
 		TypeCounter = TypeCounter + 1
-		return XCF.DataVarTypes[Name]
+		XCF.DataVarTypes[Name] = NewDataVarType
+		return NewDataVarType
 	end
 
+	XCF.DataVars = XCF.DataVars or {} -- Maps variable UUIDs to variable definitions
+	XCF.DataVarsByGroupAndName = XCF.DataVarsByGroupAndName or {} -- Maps variable group and name to variable definition for easy lookup
+	XCF.DataVarGroupsOrdered = XCF.DataVarGroupsOrdered or {} -- Maps group to ordered list of variable names for that group, used for menu generation
+
 	--- Defines data variable on the client
-	local VarCounter = 0
+	local VarCounter = 1
 	function XCF.DefineDataVar(Name, Group, Type, Default, Options)
-		local ExistingDataVar = XCF.DataVars[Name]
+		local ExistingDataVar = XCF.DataVarsByGroupAndName[Group] and XCF.DataVarsByGroupAndName[Group][Name]
 
 		local NewDataVar = {
 			Name = Name,
-			UUID = VarCounter,
 			Group = Group,
+			UUID = VarCounter,
 			Type = Type,
 			Default = Default,
 			Options = Options,
 			Values = ExistingDataVar and ExistingDataVar.Values or {} -- Preserve existing values if redefining the variable,
 		}
 
-		XCF.DataVars[Name] = NewDataVar
+		XCF.DataVars[VarCounter] = NewDataVar
+		XCF.DataVarsByGroupAndName[Group] = XCF.DataVarsByGroupAndName[Group] or {}
+		XCF.DataVarsByGroupAndName[Group][Name] = NewDataVar
 
-		XCF.DataVarIDsToNames[VarCounter] = Name
-		XCF.DataVarGroups[Group] = XCF.DataVarGroups[Group] or {}
-		XCF.DataVarGroups[Group][Name] = true
+		-- Add to ordered list of groups
 		XCF.DataVarGroupsOrdered[Group] = XCF.DataVarGroupsOrdered[Group] or {}
 		table.insert(XCF.DataVarGroupsOrdered[Group], Name)
 
@@ -80,8 +83,8 @@ do -- Managing data variable synchronization and networking
 	--- Synchronizes server data with the other realm
 	--- Called from server: Sends to the specific player if specified, or all players if nil
 	--- Called from client: Player argument does nothing
-	function XCF.SetServerData(Key, Value, TargetPlayer)
-		local DataVar = XCF.DataVars[Key]
+	function XCF.SetServerData(Name, Group, Value, TargetPlayer)
+		local DataVar = XCF.DataVarsByGroupAndName[Group][Name]
 		if DataVar.Values[ServerKey] ~= Value then
 			DataVar.Values[ServerKey] = Value
 			if SERVER then SendDataVar(DataVar, Value, true, TargetPlayer)
@@ -92,8 +95,8 @@ do -- Managing data variable synchronization and networking
 	--- Synchronizes client data with the other realm
 	--- Called from server: Sends to the specific player if specified, or all players if nil
 	--- Called from client: Player argument does nothing
-	function XCF.SetClientData(Key, Value, TargetPlayer)
-		local DataVar = XCF.DataVars[Key]
+	function XCF.SetClientData(Name, Group, Value, TargetPlayer)
+		local DataVar = XCF.DataVarsByGroupAndName[Group][Name]
 
 		-- Called from client: use local player
 		-- Called from server: use player argument or all players if nil
@@ -115,10 +118,7 @@ do -- Managing data variable synchronization and networking
 		if len > (XCF_DATA_VAR_MAX_MESSAGE_SIZE * 8) then return end
 
 		local ID = net.ReadUInt(XCF_DATA_VAR_LIMIT_EXPONENT)
-		local Key = XCF.DataVarIDsToNames[ID]
-		if not Key then return end
-
-		local DataVar = XCF.DataVars[Key]
+		local DataVar = XCF.DataVars[ID]
 		if not DataVar then return end
 
 		local SyncServerRealm = net.ReadBool()
@@ -134,13 +134,13 @@ do -- Managing data variable synchronization and networking
 			if SyncServerRealm then DataVar.Values[ServerKey] = Value
 			else DataVar.Values[LocalPlayer()] = Value end
 		end
-		hook.Run("XCF_OnDataVarChanged", Key, Value) -- Notify any listeners that the variable has changed
+		hook.Run("XCF_OnDataVarChanged", DataVar.Name, DataVar.Group, Value) -- Notify any listeners that the variable has changed
 	end)
 
 	if SERVER then
 		-- Cleanup values when a player leaves to avoid stale data
 		hook.Add("PlayerDisconnected", "XCF_CleanupDataVars", function(ply)
-			for _, dv in pairs(XCF.DataVars) do
+			for _, dv in ipairs(XCF.DataVars) do
 				dv.Values[ply] = nil
 			end
 		end)
@@ -149,7 +149,7 @@ do -- Managing data variable synchronization and networking
 		hook.Add("XCF_OnLoadPlayer", "XCF_FullServerDataSync", function(ply)
 			if not IsValid(ply) then return end
 
-			for _, DataVar in pairs(XCF.DataVars) do
+			for _, DataVar in ipairs(XCF.DataVars) do
 				local value = DataVar.Values["Server"]
 				if value ~= nil then
 					SendDataVar(DataVar, value, true, ply)
@@ -168,9 +168,9 @@ do -- Managing data variable synchronization and networking
 
 	--- Returns the value of a client data variable for a specific player (or local player if on client)
 	--- If not set, returns the default value for the variable from its definition
-	function XCF.GetClientData(Key, Player, IgnoreDefaults)
+	function XCF.GetClientData(Name, Group, Player, IgnoreDefaults)
 		if CLIENT then Player = LocalPlayer() end
-		local DataVar = XCF.DataVars[Key]
+		local DataVar = XCF.DataVarsByGroupAndName[Group][Name]
 		if not DataVar then return end
 		if not IgnoreDefaults and DataVar.Values[Player] == nil then return DataVar.Default end
 		return DataVar.Values[Player]
@@ -178,8 +178,8 @@ do -- Managing data variable synchronization and networking
 
 	--- Returns the value of a server data variable
 	--- If not set, returns the default value for the variable from its definition
-	function XCF.GetServerData(Key, _, IgnoreDefaults)
-		local DataVar = XCF.DataVars[Key]
+	function XCF.GetServerData(Name, Group, _, IgnoreDefaults)
+		local DataVar = XCF.DataVarsByGroupAndName[Group][Name]
 		if not DataVar then return end
 		if not IgnoreDefaults and DataVar.Values[ServerKey] == nil then return DataVar.Default end
 		return DataVar.Values[ServerKey]
@@ -188,75 +188,15 @@ do -- Managing data variable synchronization and networking
 	--- TODO: Rename these to make their synchronization purpose clearer
 
 	--- Helper that assumes server realm on the server or the local player on the client
-	function XCF.GetSharedData(Key, IgnoreDefaults)
-		if SERVER then return XCF.GetServerData(Key, nil, IgnoreDefaults)
-		else return XCF.GetClientData(Key, nil, IgnoreDefaults) end
+	function XCF.GetSharedData(Name, Group, IgnoreDefaults)
+		if SERVER then return XCF.GetServerData(Name, Group, nil, IgnoreDefaults)
+		else return XCF.GetClientData(Name, Group, nil, IgnoreDefaults) end
 	end
 
 	--- Helper that assumes server realm on the server or the local player on the client
-	function XCF.SetSharedData(Key, Value)
-		if SERVER then XCF.SetServerData(Key, Value)
-		else XCF.SetClientData(Key, Value) end
-	end
-
-	-- TODO: May want to ignore defaults and refactor other parts to use this?
-	-- Returns the current values of all data variables for a given player (or server if on server)
-	function XCF.GetDataVarValues(TargetPlayer)
-		local Results = {}
-		for Name, DataVar in pairs(XCF.DataVars) do
-			Results[Name] = DataVar.Values[TargetPlayer] or DataVar.Default
-		end
-		return Results
-	end
-end
-
--- TODO: Handle automatic persistence and queueing over time. Also have a variable specify if it should be saved on a given realm.
-do -- Handling persistence across sessions through file storage (for presets / server settings)
-	local BasePath = "xcf/"
-
-	--- Ensures that the specified file and its parent directory exist, creating them if necessary
-	function XCF.EnsureFileAndDirectoryExists(BasePath, FileName)
-		local DirExists = file.Exists(BasePath, "DATA")
-		if not DirExists then
-			file.CreateDir(BasePath)
-		end
-
-		local FileExists = file.Exists(BasePath .. FileName, "DATA")
-		if not FileExists then
-			file.Write(BasePath .. FileName, "")
-		end
-	end
-
-	if SERVER then XCF.EnsureFileAndDirectoryExists(BasePath, "persistence_sv.txt") end
-	if CLIENT then XCF.EnsureFileAndDirectoryExists(BasePath, "persistence_cl.txt") end
-
-	--- Load data vars from a file into the local player / server
-	--- Only loads variables from the group that are specified in the file
-	function XCF.LoadDataVarsFromFile(Name, Group)
-		local Path = BasePath .. Name .. ".txt"
-		if not file.Exists(Path, "DATA") then return end
-
-		local Data = util.JSONToTable(file.Read(Path, "DATA"))
-		if not Data then return end
-
-		for Name, _ in pairs(XCF.DataVarGroups[Group] or {}) do
-			if Data[Name] ~= nil then XCF.SetSharedData(Name, Data[Name]) end
-		end
-	end
-
-	--- Save data vars to a file from the local player / server.
-	--- Only saves variables from the group that have been set
-	function XCF.SaveDataVarsToFile(Name, Group)
-		local Path = BasePath .. Name .. ".txt"
-		local Data = {}
-
-		-- Implicitly avoids saving any variables that aren't defined in the group (key = nil)
-		for Name, _ in pairs(XCF.DataVarGroups[Group] or {}) do
-			local DataVar = XCF.DataVars[Name]
-			if DataVar then Data[Name] = XCF.GetSharedData(Name, true) end
-		end
-
-		file.Write(Path, util.TableToJSON(Data, true))
+	function XCF.SetSharedData(Name, Group, Value)
+		if SERVER then XCF.SetServerData(Name, Group, Value)
+		else XCF.SetClientData(Name, Group, Value) end
 	end
 end
 
@@ -270,7 +210,7 @@ do -- Automatic Menu Generation
 	function XCF.CreatePanelsFromDataVars(Menu, Group)
 		local Panels = {}
 		for _, Name in ipairs(XCF.DataVarGroupsOrdered[Group] or {}) do
-			local DataVar = XCF.DataVars[Name]
+			local DataVar = XCF.DataVarsByGroupAndName[Group][Name]
 			if DataVar then
 				Panels[Name] = XCF.CreatePanelFromDataVar(Menu, DataVar)
 			end
@@ -282,20 +222,20 @@ end
 -- TODO: Add verification for security reasons
 do -- Defining default data variables and types
 	local CreateSliderMenu = function(Menu, DataVar)
-		return Menu:AddSlider(DataVar.Name, DataVar.Options.Min, DataVar.Options.Max, 2):BindToDataVar(DataVar.Name)
+		return Menu:AddSlider(DataVar.Name, DataVar.Options.Min, DataVar.Options.Max, 2):BindToDataVar(DataVar.Name, DataVar.Group)
 	end
 
 	local CreateWangMenu = function(Menu, DataVar)
-		return Menu:AddNumberWang(DataVar.Name, DataVar.Options.Min, DataVar.Options.Max, 2):BindToDataVar(DataVar.Name)
+		return Menu:AddNumberWang(DataVar.Name, DataVar.Options.Min, DataVar.Options.Max, 2):BindToDataVar(DataVar.Name, DataVar.Group)
 	end
 
 	-- Basic types
 	XCF.DefineDataVarType("Bool", net.ReadBool, net.WriteBool, {
-		CreatePanel = function(Menu, DataVar) return Menu:AddCheckbox(DataVar.Name):BindToDataVar(DataVar.Name) end,
+		CreatePanel = function(Menu, DataVar) return Menu:AddCheckbox(DataVar.Name):BindToDataVar(DataVar.Name, DataVar.Group) end,
 	})
 
 	XCF.DefineDataVarType("String", net.ReadString, net.WriteString, {
-		CreatePanel = function(Menu, DataVar) return Menu:AddTextEntry(DataVar.Name):BindToDataVar(DataVar.Name) end,
+		CreatePanel = function(Menu, DataVar) return Menu:AddTextEntry(DataVar.Name):BindToDataVar(DataVar.Name, DataVar.Group) end,
 	})
 
 	XCF.DefineDataVarType("Float", net.ReadFloat, net.WriteFloat, {
@@ -310,7 +250,7 @@ do -- Defining default data variables and types
 	XCF.DefineDataVarType("Angle", net.ReadAngle, net.WriteAngle, {})
 
 	XCF.DefineDataVarType("Vector", net.ReadVector, net.WriteVector, {
-		CreatePanel = function(Menu, DataVar) return Menu:AddVec3Slider(DataVar.Name, DataVar.Options.Min, DataVar.Options.Max):BindToDataVar(DataVar.Name) end,
+		CreatePanel = function(Menu, DataVar) return Menu:AddVec3Slider(DataVar.Name, DataVar.Options.Min, DataVar.Options.Max):BindToDataVar(DataVar.Name, DataVar.Group) end,
 	})
 
 	XCF.DefineDataVarType("Normal", net.ReadNormal, net.WriteNormal, {})

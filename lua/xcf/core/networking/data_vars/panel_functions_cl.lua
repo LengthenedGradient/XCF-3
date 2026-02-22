@@ -39,7 +39,7 @@ end
 --- @param setterName string The name of the panel's setter function (see XCFDefineSetter)
 --- @param getterName string The name of the panel's getter function (see XCFDefineOnChanged)
 --- @param changeName string The name of the panel's OnVAlueChanged-like function to detour (see XCFDefineOnChanged)
-function PanelMeta:BindToDataVarAdv(DataVar, setterName, getterName, changeName)
+function PanelMeta:BindToDataVarAdv(Name, Group, setterName, getterName, changeName)
 	local suppress = false -- Need to prevent infinite loops when both panel and DataVar update each other
 
 	-- Panel -> DataVar (user changes)
@@ -47,7 +47,7 @@ function PanelMeta:BindToDataVarAdv(DataVar, setterName, getterName, changeName)
 		self:XCFDefineOnChanged(changeName, function(pnl)
 			if suppress then return end
 			local value = pnl[getterName](pnl)
-			XCF.SetClientData(DataVar, value)
+			XCF.SetClientData(Name, Group, value)
 		end)
 	end
 
@@ -55,15 +55,14 @@ function PanelMeta:BindToDataVarAdv(DataVar, setterName, getterName, changeName)
 	self:XCFDefineSetter(setterName, function(pnl, ...)
 		if suppress then return end
 		local value = pnl[getterName](pnl)
-		XCF.SetClientData(DataVar, value)
+		XCF.SetClientData(Name, Group, value)
 	end)
 
 	-- DataVar -> Panel (network updates)
-	local HookID = "XCF_Bind_" .. tostring(self) .. "_" .. DataVar
-	hook.Add("XCF_OnDataVarChanged", HookID, function(key, value)
-		if key ~= DataVar then return end
+	local HookID = "XCF_Bind_" .. tostring(self) .. "_" .. Name .. "_" .. Group
+	hook.Add("XCF_OnDataVarChanged", HookID, function(key, group, value)
+		if key ~= Name or group ~= Group then return end
 		if not IsValid(self) then hook.Remove("XCF_OnDataVarChanged", HookID) return end
-		print("DataVar", DataVar, "changed to", value, "updating panel", self)
 
 		suppress = true
 		self[setterName](self, value)
@@ -71,7 +70,7 @@ function PanelMeta:BindToDataVarAdv(DataVar, setterName, getterName, changeName)
 	end)
 
 	-- Initialize with current / default value (usnet values remain unset)
-	local initial = CLIENT and XCF.GetClientData(DataVar) or XCF.GetServerData(DataVar)
+	local initial = CLIENT and XCF.GetClientData(Name, Group) or XCF.GetServerData(Name, Group)
 	if initial ~= nil then
 		suppress = true
 		self[setterName](self, initial)

@@ -93,8 +93,8 @@ function PANEL:AddCheckbox(Text)
 	Panel:SetFont("XCF_Control")
 	Panel:SetDark(true)
 
-	function Panel:BindToDataVar(DataVar)
-		self:BindToDataVarAdv(DataVar, "SetChecked", "GetChecked", "OnChange")
+	function Panel:BindToDataVar(Name, Group)
+		self:BindToDataVarAdv(Name, Group, "SetChecked", "GetChecked", "OnChange")
 	end
 
 	return Panel
@@ -112,8 +112,8 @@ function PANEL:AddSlider(Title, Min, Max, Decimals)
 
 	Panel.Label:SetFont("XCF_Control")
 
-	function Panel:BindToDataVar(DataVar)
-		self:BindToDataVarAdv(DataVar, "SetValue", "GetValue", "OnValueChanged")
+	function Panel:BindToDataVar(Name, Group)
+		self:BindToDataVarAdv(Name, Group, "SetValue", "GetValue", "OnValueChanged")
 	end
 
 	return Panel
@@ -134,8 +134,8 @@ function PANEL:AddNumberWang(Label, Min, Max, Decimals)
 	Text:SetDark(true)
 	Text:Dock(TOP)
 
-	function Wang:BindToDataVar(DataVar)
-		Wang:BindToDataVarAdv(DataVar, "SetValue", "GetValue", "OnValueChanged")
+	function Wang:BindToDataVar(Name, Group)
+		Wang:BindToDataVarAdv(Name, Group, "SetValue", "GetValue", "OnValueChanged")
 	end
 
 	return Wang, Text
@@ -156,7 +156,6 @@ function PANEL:AddCollapsible(Text, State)
 	local Category = self:AddPanel("DCollapsibleCategory")
 	Category:SetLabel(Text or "Title")
 	Category.Header:SetFont("XCF_Title")
-	Category.Header:SetSize(0, 24)
 
 	Category:DoExpansion(State)
 
@@ -176,8 +175,8 @@ function PANEL:AddTextEntry(LabelText)
 
 	Label:Dock(LEFT)
 
-	function Entry:BindToDataVar(DataVar)
-		self:BindToDataVarAdv(DataVar, "SetText", "GetText", "OnTextChanged")
+	function Entry:BindToDataVar(Name, Group)
+		self:BindToDataVarAdv(Name, Group, "SetText", "GetText", "OnTextChanged")
 	end
 
 	return Entry, Base, Label
@@ -259,7 +258,7 @@ function PANEL:AddVec3Slider(Title)
 	-- TODO: Refactor this and other panel binds to reduce code duplication?
 
 	-- Binds three sliders to a vector DataVar
-	function Base:BindToDataVar(DataVar)
+	function Base:BindToDataVar(Name, Group)
 		local suppress = false
 
 		local function GetValue()
@@ -276,7 +275,7 @@ function PANEL:AddVec3Slider(Title)
 
 		local function PushToDataVar()
 			if suppress then return end
-			XCF.SetClientData(DataVar, GetValue())
+			XCF.SetClientData(Name, Group, GetValue())
 		end
 
 		-- When any one slider changes, push the new vector to the DataVar
@@ -289,9 +288,9 @@ function PANEL:AddVec3Slider(Title)
 		self.varZ:XCFDefineSetter("SetValue", PushToDataVar)
 
 		-- When the datavar changes, update all sliders.
-		local HookID = "XCF_Bind_" .. tostring(self) .. "_" .. DataVar
-		hook.Add("XCF_OnDataVarChanged", HookID, function(changedKey, value)
-			if changedKey ~= DataVar then return end
+		local HookID = "XCF_Bind_" .. tostring(self) .. "_" .. Name .. "_" .. Group
+		hook.Add("XCF_OnDataVarChanged", HookID, function(changedKey, changedGroup, value)
+			if changedKey ~= Name or changedGroup ~= Group then return end
 			if not IsValid(self) then hook.Remove("XCF_OnDataVarChanged", HookID) return end
 
 			suppress = true
@@ -300,7 +299,7 @@ function PANEL:AddVec3Slider(Title)
 		end)
 
 		-- Initialize with current/default value
-		local initial = CLIENT and XCF.GetClientData(DataVar) or XCF.GetServerData(DataVar)
+		local initial = CLIENT and XCF.GetClientData(Name, Group) or XCF.GetServerData(Name, Group)
 		if initial then
 			SetValue(initial)
 		end
