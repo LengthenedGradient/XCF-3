@@ -134,7 +134,7 @@ function PANEL:AddNumberWang(Label, Min, Max, Decimals)
 	Text:SetDark(true)
 	Text:Dock(TOP)
 
-	function Base:BindToDataVar(DataVar)
+	function Wang:BindToDataVar(DataVar)
 		Wang:BindToDataVarAdv(DataVar, "SetValue", "GetValue", "OnValueChanged")
 	end
 
