@@ -84,14 +84,3 @@ function ModelData.GetModelSize(Model, Scale)
 
 	return Data.Size * Scale
 end
-
---- Returns the scale of an entity
---- TODO: Unused?
-function ModelData.GetEntityScale(Entity)
-	if Entity.XCFIsScalable and Entity.GetScale then
-		local Scale = Entity:GetScale()
-		return Scale
-	end
-
-	return Entity:GetModelScale()
-end

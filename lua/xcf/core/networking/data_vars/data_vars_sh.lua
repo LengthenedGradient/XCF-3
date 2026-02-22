@@ -84,7 +84,6 @@ do -- Managing data variable synchronization and networking
 	--- Called from server: Sends to the specific player if specified, or all players if nil
 	--- Called from client: Player argument does nothing
 	function XCF.SetServerData(Name, Group, Value, TargetPlayer)
-		assert(Name and Group and Value, "Name, Group, and Value are required to set a server data variable")
 		local DataVar = XCF.DataVarsByGroupAndName[Group][Name]
 		if DataVar.Values[ServerKey] ~= Value then
 			DataVar.Values[ServerKey] = Value
@@ -220,7 +219,6 @@ do -- Automatic Menu Generation
 	end
 end
 
--- TODO: Add verification for security reasons
 do -- Defining default data variables and types
 	local CreateSliderMenu = function(Menu, DataVar)
 		return Menu:AddSlider(DataVar.Name, DataVar.Options.Min, DataVar.Options.Max, 2):BindToDataVar(DataVar.Name, DataVar.Group)
