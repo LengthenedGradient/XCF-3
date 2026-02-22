@@ -110,7 +110,6 @@ function PANEL:AddSlider(Title, Min, Max, Decimals)
 	if Min and Max then
 		Panel:SetMinMax(Min, Max)
 	end
-	Panel:SetValue(Min)
 	Panel:SetDark(true)
 
 	Panel.Label:SetFont("XCF_Control")
@@ -240,11 +239,60 @@ end
 function PANEL:AddVec3Slider(Title)
 	local Base = self:AddPanel("XCF_Panel")
 
-	local X = Base:AddSlider(Title .. " X", 0, 2, 2)
-	local Y = Base:AddSlider(Title .. " Y", 0, 2, 2)
-	local Z = Base:AddSlider(Title .. " Z", 0, 2, 2)
+	Base.varX = Base:AddSlider(Title .. " X", 0, 2, 2)
+	Base.varY = Base:AddSlider(Title .. " Y", 0, 2, 2)
+	Base.varZ = Base:AddSlider(Title .. " Z", 0, 2, 2)
 
-	return X, Y, Z
+	-- TODO: Refactor this and other panel binds to reduce code duplication?
+
+	-- Binds three sliders to a vector DataVar
+	function Base:BindToDataVarAdv(DataVar)
+		local suppress = false
+
+		local function GetValue()
+			return Vector(self.varX:GetValue(), self.varY:GetValue(), self.varZ:GetValue())
+		end
+
+		local function SetValue(vec)
+			suppress = true
+			self.varX:SetValue(vec.x)
+			self.varY:SetValue(vec.y)
+			self.varZ:SetValue(vec.z)
+			suppress = false
+		end
+
+		local function PushToDataVar()
+			if suppress then return end
+			XCF.SetClientData(DataVar, GetValue())
+		end
+
+		-- When any one slider changes, push the new vector to the DataVar
+		self.varX:DefineOnChanged("OnValueChanged", PushToDataVar)
+		self.varY:DefineOnChanged("OnValueChanged", PushToDataVar)
+		self.varZ:DefineOnChanged("OnValueChanged", PushToDataVar)
+
+		self.varX:DefineSetter("SetValue", PushToDataVar)
+		self.varY:DefineSetter("SetValue", PushToDataVar)
+		self.varZ:DefineSetter("SetValue", PushToDataVar)
+
+		-- When the datavar changes, update all sliders.
+		hook.Add("XCF_OnDataVarChanged", "XCF_Bind_" .. tostring(self) .. "_" .. DataVar, function(changedKey, value)
+			if changedKey ~= DataVar then return end
+			if not IsValid(self) then return end
+
+			suppress = true
+			SetValue(value)
+			suppress = false
+		end)
+
+		-- Initialize with current/default value
+		local initial = CLIENT and XCF.GetClientData(DataVar) or XCF.GetServerData(DataVar)
+		if initial then
+			SetValue(initial)
+		end
+	end
+
+	return Base
 end
 
 -- TODO: Add graph element

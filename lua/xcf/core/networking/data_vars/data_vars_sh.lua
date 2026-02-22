@@ -192,6 +192,7 @@ end
 do -- Handling persistence across sessions through file storage (for presets / server settings)
 	local BasePath = "xcf/"
 
+	--- Ensures that the specified file and its parent directory exist, creating them if necessary
 	function XCF.EnsureFileAndDirectoryExists(BasePath, FileName)
 		local DirExists = file.Exists(BasePath, "DATA")
 		if not DirExists then

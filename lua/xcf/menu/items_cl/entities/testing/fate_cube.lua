@@ -8,7 +8,7 @@ local function CreateFateCubeMenu(MenuPanel)
 	Base:AddModelPreview("models/hunter/blocks/cube075x075x075.mdl"):XCFDebug("Model")
 	Base:AddSlider("Volatility", 0, 1, 2):XCFDebug("Volatility"):BindToDataVar("Volatility", "SetValue", "GetValue", "OnValueChanged")
 	Base:AddNumberWang("State", 0, 10):XCFDebug("State"):BindToDataVar("State", "SetValue", "GetValue", "OnValueChanged")
-	Base:AddVec3Slider("Scale"):XCFDebug("Scale")
+	Base:AddVec3Slider("Scale"):XCFDebug("Scale"):BindToDataVarAdv("Size")
 	Base:AddTextEntry("Material"):XCFDebug("Material"):BindToDataVar("Material", "SetValue", "GetValue", "OnValueChange")
 end
 
