@@ -198,6 +198,7 @@ function PANEL:AddPresetsBar(PresetGroup)
 	end
 
 	function Dropdown:RefreshChoices()
+		XCF.LoadPresetsForGroup(PresetGroup)
 		Dropdown:Clear()
 		for Name, _ in pairs(XCF.PresetsByGroupAndName[PresetGroup] or {}) do
 			Dropdown:AddChoice(Name)
@@ -248,7 +249,7 @@ function PANEL:AddPresetsBar(PresetGroup)
 			end
 
 			XCF.AddPreset(text, PresetGroup, PresetGroup)
-			-- XCF.SavePreset(text, PresetGroup)
+			XCF.SavePreset(text, PresetGroup)
 			Dropdown:RefreshChoices()
 		end)
 	end

@@ -1,6 +1,6 @@
 XCF.PresetsByGroupAndName = XCF.PresetsByGroupAndName or {} -- Maps Group -> Name -> Preset
 
-local BasePath = "xcf/presets/"
+local BasePath = "xcf/presets/" -- Base path preset folders/files are located at
 
 --- Creates a preset with the given information
 --- @param PresetName string
@@ -53,14 +53,40 @@ function XCF.ApplyPreset(Name, Group)
 	end
 end
 
--- function XCF.SavePreset(Name, Group)
--- 	local Preset = XCF.PresetsByGroupAndName[Group][Name]
--- 	if not Preset then return end
+--- Saves a preset to disk. Presets are stored in garrysmod/data/xcf/presets/.
+--- Used by the preset menu when saving a preset
+function XCF.SavePreset(Name, Group)
+	local Preset = XCF.PresetsByGroupAndName[Group][Name]
+	if not Preset then return end
 
--- 	XCF.EnsureFileAndDirectoryExists(BasePath, Name .. ".txt")
+	local SubPath = BasePath .. "/" .. Group .. "/"
+	if not file.Exists(SubPath, "DATA") then file.CreateDir(SubPath) end
 
--- 	file.Write(
--- 		BasePath .. Name .. ".txt",
--- 		util.TableToJSON(Preset.Data, true)
--- 	)
--- end
+	local FullPath = SubPath .. Name .. ".txt"
+
+	local SaveData = {
+		Name = Preset.Name,
+		PresetGroup = Preset.PresetGroup,
+		DataVarGroup = Preset.DataVarGroup,
+		Data = Preset.Data
+	}
+
+	file.Write(FullPath, util.TableToJSON(SaveData, true))
+end
+
+--- Loads all presets for a specific group from disk.
+--- Used by the preset menu to populate the list of presets.
+function XCF.LoadPresetsForGroup(Group)
+	local GroupPath = BasePath .. Group .. "/"
+	if not file.Exists(GroupPath, "DATA") then return end
+
+	local Files = file.Find(GroupPath .. "*.txt", "DATA")
+
+	for _, FileName in ipairs(Files) do
+		local JSON = file.Read(GroupPath .. FileName, "DATA")
+		local Loaded = util.JSONToTable(JSON)
+		if Loaded and Loaded.Name and Loaded.PresetGroup then
+			XCF.AddPreset(Loaded.Name, Loaded.PresetGroup, Loaded.DataVarGroup, true, Loaded.Data)
+		end
+	end
+end
