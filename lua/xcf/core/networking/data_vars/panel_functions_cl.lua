@@ -60,8 +60,8 @@ function PanelMeta:BindToDataVarAdv(Name, Group, setterName, getterName, changeN
 
 	-- DataVar -> Panel (network updates)
 	local HookID = "XCF_Bind_" .. tostring(self) .. "_" .. Name .. "_" .. Group
-	hook.Add("XCF_OnDataVarChanged", HookID, function(key, group, value)
-		if key ~= Name or group ~= Group then return end
+	hook.Add("XCF_OnDataVarChanged", HookID, function(name, group, value)
+		if name ~= Name or group ~= Group then return end
 		if not IsValid(self) then hook.Remove("XCF_OnDataVarChanged", HookID) return end
 
 		suppress = true
@@ -69,7 +69,7 @@ function PanelMeta:BindToDataVarAdv(Name, Group, setterName, getterName, changeN
 		suppress = false
 	end)
 
-	-- Initialize with current / default value (usnet values remain unset)
+	-- Initialize with current / default value (unset values remain unset)
 	local initial = CLIENT and XCF.GetClientData(Name, Group) or XCF.GetServerData(Name, Group)
 	if initial ~= nil then
 		suppress = true

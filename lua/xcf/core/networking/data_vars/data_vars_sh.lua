@@ -77,7 +77,7 @@ do -- Managing data variable synchronization and networking
 			net.SendToServer()
 		end
 		-- print("Sent data var", XCF.DataVarIDsToNames[DataVar.UUID], "with value", Value)
-		hook.Run("XCF_OnDataVarChanged", DataVar.Name, Value) -- Notify our realm before we send
+		hook.Run("XCF_OnDataVarChanged", DataVar.Name, DataVar.Group, Value) -- Notify our realm before we send
 	end
 
 	--- Synchronizes server data with the other realm
