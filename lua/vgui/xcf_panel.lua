@@ -78,26 +78,20 @@ function PANEL:AddHelp(Text)
 	return Panel
 end
 
-function PANEL:AddButton(Text, OnClick)
+function PANEL:AddButton(Text)
 	local Panel = self:AddPanel("DButton")
 	Panel:SetText(Text or "Button")
 	Panel:SetFont("XCF_Control")
 	Panel:SetDark(true)
-	if OnClick then
-		Panel.DoClick = OnClick
-	end
 
 	return Panel
 end
 
-function PANEL:AddCheckbox(Text, OnChange)
+function PANEL:AddCheckbox(Text)
 	local Panel = self:AddPanel("DCheckBoxLabel")
 	Panel:SetText(Text or "Checkbox")
 	Panel:SetFont("XCF_Control")
 	Panel:SetDark(true)
-	if OnChange then
-		Panel.OnChange = OnChange
-	end
 
 	return Panel
 end

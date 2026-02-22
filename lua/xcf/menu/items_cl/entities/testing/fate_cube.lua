@@ -1,7 +1,6 @@
 local function CreateFateCubeMenu(MenuPanel)
 	MenuPanel:AddLabel("Cube that changes state randomly when its wire input is triggered.\nInteracts with linked boxes.")
-	MenuPanel:AddButton("Test Button", function() print("Button Clicked") end)
-	MenuPanel:AddCheckbox("Test Checkbox", function(_, Val) print("Checkbox Changed:", Val) end)
+	MenuPanel:AddButton("Test Button"):XCFDebug("Test Button")
 
 	local Base = MenuPanel:AddCollapsible("Settings")
 	Base:AddPresetsBar()
@@ -10,6 +9,7 @@ local function CreateFateCubeMenu(MenuPanel)
 	Base:AddNumberWang("State", 0, 10):XCFDebug("State"):BindToDataVarAdv("State", "SetValue", "GetValue", "OnValueChanged")
 	Base:AddVec3Slider("Scale"):XCFDebug("Scale"):BindToDataVar("Size")
 	Base:AddTextEntry("Material"):XCFDebug("Material"):BindToDataVarAdv("Material", "SetValue", "GetValue", "OnValueChange")
+	Base:AddCheckbox("MakeNoise"):XCFDebug("MakeNoise"):BindToDataVarAdv("MakeNoise", "SetChecked", "GetChecked", "OnChange")
 end
 
 XCF.AddMenuItem(1, "Fate Cube", "icon16/bricks.png", CreateFateCubeMenu, "Testing")

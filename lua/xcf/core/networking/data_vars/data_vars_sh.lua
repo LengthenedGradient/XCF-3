@@ -1,5 +1,7 @@
 local XCF = XCF
 
+-- TODO: Maybe consider using group as a scope to avoid name conflicts?
+
 do -- Macros for defining data variables and their types
 	XCF.DataVarTypes = XCF.DataVarTypes or {} -- Maps type names to type definitions
 	XCF.DataVars = XCF.DataVars or {} -- Maps variable names to variable definitions
