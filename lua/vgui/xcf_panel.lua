@@ -162,12 +162,14 @@ function PANEL:AddCollapsible(Text, State)
 	return Base, Category
 end
 
-function PANEL:AddTextEntry(Placeholder)
-	local Panel = self:AddPanel("DTextEntry")
-	Panel:SetFont("XCF_Control")
-	Panel:SetPlaceholderText(Placeholder)
+function PANEL:AddTextEntry(LabelText)
+	local Base = self:AddPanel("XCF_Panel")
 
-	return Panel
+	local Label = Base:AddLabel(LabelText)
+	local Entry = Base:AddPanel("DTextEntry")
+
+	Label:Dock(LEFT)
+	return Entry, Base, Label
 end
 
 -- Similar to ControlPresets derma panel, but for XCF.
@@ -246,7 +248,7 @@ function PANEL:AddVec3Slider(Title)
 	-- TODO: Refactor this and other panel binds to reduce code duplication?
 
 	-- Binds three sliders to a vector DataVar
-	function Base:BindToDataVarAdv(DataVar)
+	function Base:BindToDataVar(DataVar)
 		local suppress = false
 
 		local function GetValue()
@@ -267,13 +269,13 @@ function PANEL:AddVec3Slider(Title)
 		end
 
 		-- When any one slider changes, push the new vector to the DataVar
-		self.varX:DefineOnChanged("OnValueChanged", PushToDataVar)
-		self.varY:DefineOnChanged("OnValueChanged", PushToDataVar)
-		self.varZ:DefineOnChanged("OnValueChanged", PushToDataVar)
+		self.varX:XCFDefineOnChanged("OnValueChanged", PushToDataVar)
+		self.varY:XCFDefineOnChanged("OnValueChanged", PushToDataVar)
+		self.varZ:XCFDefineOnChanged("OnValueChanged", PushToDataVar)
 
-		self.varX:DefineSetter("SetValue", PushToDataVar)
-		self.varY:DefineSetter("SetValue", PushToDataVar)
-		self.varZ:DefineSetter("SetValue", PushToDataVar)
+		self.varX:XCFDefineSetter("SetValue", PushToDataVar)
+		self.varY:XCFDefineSetter("SetValue", PushToDataVar)
+		self.varZ:XCFDefineSetter("SetValue", PushToDataVar)
 
 		-- When the datavar changes, update all sliders.
 		hook.Add("XCF_OnDataVarChanged", "XCF_Bind_" .. tostring(self) .. "_" .. DataVar, function(changedKey, value)

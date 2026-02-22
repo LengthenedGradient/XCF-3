@@ -13,7 +13,7 @@ end
 --- Defines a function that runs when a panel's value is changed by the user.
 --- @param changeName string The name of the panel's OnValueChanged-like function to detour (e.g. "OnValueChanged" for DNumSlider, "OnTextChanged" for DTextEntry)
 --- @param callback function The function to run when the value is changed. Will be passed the panel and any arguments from the original function.
-function PanelMeta:DefineOnChanged(changeName, callback)
+function PanelMeta:XCFDefineOnChanged(changeName, callback)
 	local oldFunc = self[changeName]
 	self[changeName] = function(pnl, ...)
 		oldFunc(pnl, ...)
@@ -24,7 +24,7 @@ end
 --- Defines a function that runs when a panel's value is changed programatically (via setter function)
 --- @param setterName string The name of the panel's setter function to detour (e.g. "SetValue" for DNumSlider, "SetText" for DTextEntry)
 --- @param callback function The function to run when the value is changed. Will be passed the panel and any arguments from the original function.
-function PanelMeta:DefineSetter(setterName, callback)
+function PanelMeta:XCFDefineSetter(setterName, callback)
 	local oldFunc = self[setterName]
 	self[setterName] = function(pnl, ...)
 		oldFunc(pnl, ...)
@@ -36,15 +36,15 @@ end
 --- Whenever the panel's value is changed by the user or programmatically, the data variable will be updated.
 --- Whenever the data variable is updated (by the server or client), the panel's value will be updated.
 --- @param DataVar string The name of the data variable to bind to
---- @param setterName string The name of the panel's setter function (see DefineSetter)
---- @param getterName string The name of the panel's getter function (see DefineOnChanged)
---- @param changeName string The name of the panel's OnVAlueChanged-like function to detour (see DefineOnChanged)
-function PanelMeta:BindToDataVar(DataVar, setterName, getterName, changeName)
+--- @param setterName string The name of the panel's setter function (see XCFDefineSetter)
+--- @param getterName string The name of the panel's getter function (see XCFDefineOnChanged)
+--- @param changeName string The name of the panel's OnVAlueChanged-like function to detour (see XCFDefineOnChanged)
+function PanelMeta:BindToDataVarAdv(DataVar, setterName, getterName, changeName)
 	local suppress = false -- Need to prevent infinite loops when both panel and DataVar update each other
 
 	-- Panel -> DataVar (user changes)
 	if changeName then
-		self:DefineOnChanged(changeName, function(pnl)
+		self:XCFDefineOnChanged(changeName, function(pnl)
 			if suppress then return end
 			local value = pnl[getterName](pnl)
 			XCF.SetClientData(DataVar, value)
@@ -52,7 +52,7 @@ function PanelMeta:BindToDataVar(DataVar, setterName, getterName, changeName)
 	end
 
 	-- Setter -> DataVar (programmatic changes)
-	self:DefineSetter(setterName, function(pnl, ...)
+	self:XCFDefineSetter(setterName, function(pnl, ...)
 		if suppress then return end
 		local value = pnl[getterName](pnl)
 		XCF.SetClientData(DataVar, value)
