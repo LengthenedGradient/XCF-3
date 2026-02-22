@@ -53,6 +53,12 @@ end
 function PanelMeta:BindToDataVarAdv(Name, Group, setterName, getterName, changeName)
 	local suppress = false -- Need to prevent infinite loops when both panel and DataVar update each other
 
+	local function SetValue(value)
+		suppress = true
+		self[setterName](self, value)
+		suppress = false
+	end
+
 	-- Panel -> DataVar (user changes)
 	local function PushToDataVar(pnl)
 		if suppress then return end
@@ -69,17 +75,13 @@ function PanelMeta:BindToDataVarAdv(Name, Group, setterName, getterName, changeN
 		if name ~= Name or group ~= Group then return end
 		if not IsValid(self) then hook.Remove("XCF_OnDataVarChanged", HookID) return end
 
-		suppress = true
-		self[setterName](self, value)
-		suppress = false
+		SetValue(value)
 	end)
 
 	-- Initialize with current / default value (unset values remain unset)
 	local initial = CLIENT and XCF.GetClientData(Name, Group) or XCF.GetServerData(Name, Group)
 	if initial ~= nil then
-		suppress = true
-		self[setterName](self, initial)
-		suppress = false
+		SetValue(initial)
 	end
 end
 

@@ -333,9 +333,7 @@ function PANEL:AddVec3Slider(Title, Min, Max, Decimals)
 			if changedKey ~= Name or changedGroup ~= Group then return end
 			if not IsValid(self) then hook.Remove("XCF_OnDataVarChanged", HookID) return end
 
-			suppress = true
 			SetValue(value)
-			suppress = false
 		end)
 
 		-- Initialize with current/default value
