@@ -161,7 +161,7 @@ do -- Managing data variable synchronization and networking
 		if not IsValid(Player) then return true end -- No player, probably the server
 		if Player:IsSuperAdmin() then return true end
 
-		return XCF.GetServerData("ServerDataAllowAdmin") and Player:IsAdmin()
+		return XCF.GetRealmData("ServerDataAllowAdmin", nil, true) and Player:IsAdmin()
 	end
 
 	--- Returns the value of a client data variable for a specific player (or local player if on client)
@@ -183,16 +183,14 @@ do -- Managing data variable synchronization and networking
 		return DataVar.Values[ServerKey]
 	end
 
-	--- TODO: Rename these to make their synchronization purpose clearer
-
-	--- Helper that assumes server realm on the server or the local player on the client
-	function XCF.GetSharedData(Name, Group, IgnoreDefaults)
+	--- Calls GetClientData or GetServerData based on the realm
+	function XCF.GetRealmData(Name, Group, IgnoreDefaults)
 		if SERVER then return XCF.GetServerData(Name, Group, nil, IgnoreDefaults)
 		else return XCF.GetClientData(Name, Group, nil, IgnoreDefaults) end
 	end
 
-	--- Helper that assumes server realm on the server or the local player on the client
-	function XCF.SetSharedData(Name, Group, Value)
+	--- Calls SetClientData or SetServerData based on the realm
+	function XCF.SetRealmData(Name, Group, Value)
 		if SERVER then XCF.SetServerData(Name, Group, Value)
 		else XCF.SetClientData(Name, Group, Value) end
 	end

@@ -16,7 +16,7 @@ function XCF.AddPreset(PresetName, PresetGroup, DataVarGroup, SaveUnset)
 	}
 
 	for VarName, _ in pairs(XCF.DataVarsByGroupAndName[DataVarGroup] or {}) do
-		local Value = XCF.GetSharedData(VarName, DataVarGroup, not SaveUnset)
+		local Value = XCF.GetRealmData(VarName, DataVarGroup, not SaveUnset)
 		if Value ~= nil then
 			NewPreset.Data[DataVarGroup] = NewPreset.Data[DataVarGroup] or {}
 			NewPreset.Data[DataVarGroup][VarName] = Value
@@ -48,7 +48,7 @@ function XCF.ApplyPreset(Name, Group)
 
 	for Group, GroupTable in pairs(Preset.Data) do
 		for VarName, Value in pairs(GroupTable) do
-			XCF.SetSharedData(VarName, Group, Value)
+			XCF.SetRealmData(VarName, Group, Value)
 		end
 	end
 end
