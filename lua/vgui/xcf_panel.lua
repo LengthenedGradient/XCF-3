@@ -249,7 +249,8 @@ function PANEL:AddPresetsBar(PresetScope)
 				)
 			end
 
-			XCF.AddPreset(text, PresetScope, PresetScope)
+			local Data = XCF.GetAllRealmData(PresetScope)
+			XCF.AddPreset(text, PresetScope, PresetScope, Data)
 			XCF.SavePreset(text, PresetScope)
 			Dropdown:RefreshChoices(text)
 		end)

@@ -9,23 +9,13 @@ local BasePath = "xcf/presets/" -- Base path preset folders/files are located at
 --- @param PresetScope string The scope of the preset. Presets are organized by scope, and presets in the same scope share the same set of data variables.
 --- @param DataVarScope string The data variable scope that this preset is associated with.
 --- @param SaveUnset boolean Whether to save unset data variables using their default. Not specifying allows you to only apply changes to what you want.
-function XCF.AddPreset(PresetName, PresetScope, DataVarScope, Data, SaveUnset)
+function XCF.AddPreset(PresetName, PresetScope, DataVarScope, Data)
 	local NewPreset = {
 		Name = PresetName,
 		PresetScope = PresetScope,
 		DataVarScope = DataVarScope,
-		Data = Data or {},
+		Data = Data,
 	}
-
-	if not Data then
-		for VarName, _ in pairs(XCF.DataVarsByScopeAndName[DataVarScope] or {}) do
-			local Value = XCF.GetRealmData(VarName, DataVarScope, not SaveUnset)
-			if Value ~= nil then
-				NewPreset.Data[DataVarScope] = NewPreset.Data[DataVarScope] or {}
-				NewPreset.Data[DataVarScope][VarName] = Value
-			end
-		end
-	end
 
 	XCF.PresetsByScopeAndName[PresetScope] = XCF.PresetsByScopeAndName[PresetScope] or {}
 	XCF.PresetsByScopeAndName[PresetScope][PresetName] = NewPreset
