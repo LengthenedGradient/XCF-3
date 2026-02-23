@@ -223,6 +223,9 @@ do -- Automatic Menu Generation
 	function XCF.CreatePanelFromDataVar(Menu, DataVar)
 		if not DataVar.Type.Options.CreatePanel then return end
 		local Panel = DataVar.Type.Options.CreatePanel(Menu, DataVar)
+		-- print(Panel, DataVar.Name, DataVar.Scope)
+		if Panel.BindToDataVar then Panel:BindToDataVar(DataVar.Name, DataVar.Scope) end
+		if DataVar.Options.Tooltip then Panel:SetTooltip(DataVar.Options.Tooltip) end
 		return Panel
 	end
 
@@ -240,20 +243,20 @@ end
 
 do -- Defining default data variables and types
 	local CreateSliderMenu = function(Menu, DataVar)
-		return Menu:AddSlider(DataVar.Name, DataVar.Options.Min, DataVar.Options.Max, 2):BindToDataVar(DataVar.Name, DataVar.Scope)
+		return Menu:AddSlider(DataVar.Name, DataVar.Options.Min, DataVar.Options.Max, 2)
 	end
 
 	local CreateWangMenu = function(Menu, DataVar)
-		return Menu:AddNumberWang(DataVar.Name, DataVar.Options.Min, DataVar.Options.Max, 2):BindToDataVar(DataVar.Name, DataVar.Scope)
+		return Menu:AddNumberWang(DataVar.Name, DataVar.Options.Min, DataVar.Options.Max, 2)
 	end
 
 	-- Basic types
 	XCF.DefineDataVarType("Bool", net.ReadBool, net.WriteBool, {
-		CreatePanel = function(Menu, DataVar) return Menu:AddCheckbox(DataVar.Name):BindToDataVar(DataVar.Name, DataVar.Scope) end,
+		CreatePanel = function(Menu, DataVar) return Menu:AddCheckbox(DataVar.Name) end,
 	})
 
 	XCF.DefineDataVarType("String", net.ReadString, net.WriteString, {
-		CreatePanel = function(Menu, DataVar) return Menu:AddTextEntry(DataVar.Name):BindToDataVar(DataVar.Name, DataVar.Scope) end,
+		CreatePanel = function(Menu, DataVar) return Menu:AddTextEntry(DataVar.Name) end,
 	})
 
 	XCF.DefineDataVarType("Float", net.ReadFloat, net.WriteFloat, {
@@ -268,7 +271,7 @@ do -- Defining default data variables and types
 	XCF.DefineDataVarType("Angle", net.ReadAngle, net.WriteAngle, {})
 
 	XCF.DefineDataVarType("Vector", net.ReadVector, net.WriteVector, {
-		CreatePanel = function(Menu, DataVar) return Menu:AddVec3Slider(DataVar.Name, DataVar.Options.Min, DataVar.Options.Max, 2):BindToDataVar(DataVar.Name, DataVar.Scope) end,
+		CreatePanel = function(Menu, DataVar) return Menu:AddVec3Slider(DataVar.Name, DataVar.Options.Min, DataVar.Options.Max, 2) end,
 	})
 
 	XCF.DefineDataVarType("Normal", net.ReadNormal, net.WriteNormal, {})
