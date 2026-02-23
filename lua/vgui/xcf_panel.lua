@@ -203,7 +203,7 @@ function PANEL:AddPresetsBar(PresetGroup)
 		for Name, _ in pairs(XCF.PresetsByGroupAndName[PresetGroup] or {}) do
 			Dropdown:AddChoice(Name)
 		end
-		if text then Dropdown:ChooseOption(text) end
+		-- if text then Dropdown:ChooseOption(text) end
 	end
 
 	local RemoveButton = vgui.Create("DImageButton", Panel)

@@ -3,8 +3,6 @@ local XCF = XCF
 -- TODO: Maybe consider using group as a scope to avoid name conflicts?
 -- TODO: determine if there are looping issues with the menu
 
--- TODO: Fix variable redefinition when hotloading from other files
-
 do -- Macros for defining data variables and their types
 	XCF.DataVarTypesByName = XCF.DataVarTypesByName or {} -- Maps name -> type definition
 
@@ -38,18 +36,21 @@ do -- Macros for defining data variables and their types
 			Type = Type,
 			Default = Default,
 			Options = Options or {},
-			Values = ExistingDataVar and ExistingDataVar.Values or {} -- Preserve existing values if redefining the variable,
+			Values = ExistingDataVar and ExistingDataVar.Values or {},
 		}
 
-		XCF.DataVars[VarCounter] = NewDataVar
+		-- Only change UUID / Order if this is a new variable.
+		if not ExistingDataVar then
+			-- Add to ordered list of groups
+			XCF.DataVarGroupsOrdered[Group] = XCF.DataVarGroupsOrdered[Group] or {}
+			table.insert(XCF.DataVarGroupsOrdered[Group], Name)
+			XCF.DataVars[VarCounter] = NewDataVar
+			VarCounter = VarCounter + 1
+		end
+
 		XCF.DataVarsByGroupAndName[Group] = XCF.DataVarsByGroupAndName[Group] or {}
 		XCF.DataVarsByGroupAndName[Group][Name] = NewDataVar
 
-		-- Add to ordered list of groups
-		XCF.DataVarGroupsOrdered[Group] = XCF.DataVarGroupsOrdered[Group] or {}
-		table.insert(XCF.DataVarGroupsOrdered[Group], Name)
-
-		VarCounter = VarCounter + 1
 		return NewDataVar
 	end
 end
@@ -195,6 +196,24 @@ do -- Managing data variable synchronization and networking
 	function XCF.SetRealmData(Name, Group, Value)
 		if SERVER then XCF.SetServerData(Name, Group, Value)
 		else XCF.SetClientData(Name, Group, Value) end
+	end
+
+	function XCF.GetAllRealmData(IgnoreDefaults)
+		local Result = {}
+		for Group, _ in pairs(XCF.DataVarsByGroupAndName) do
+			for Name, _ in pairs(XCF.DataVarsByGroupAndName[Group] or {}) do
+				Result[Name] = XCF.GetRealmData(Name, Group, IgnoreDefaults)
+			end
+		end
+		return Result
+	end
+
+	function XCF.SetAllRealmData(Data)
+		for Group, _ in pairs(XCF.DataVarsByGroupAndName) do
+			for Name, _ in pairs(XCF.DataVarsByGroupAndName[Group] or {}) do
+				if Data[Name] ~= nil then XCF.SetRealmData(Name, Group, Data[Name]) end
+			end
+		end
 	end
 end
 

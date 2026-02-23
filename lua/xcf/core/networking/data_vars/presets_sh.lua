@@ -1,3 +1,5 @@
+-- TODO: Cleanup how data is loaded in from preset filse
+
 XCF.PresetsByGroupAndName = XCF.PresetsByGroupAndName or {} -- Maps Group -> Name -> Preset
 
 local BasePath = "xcf/presets/" -- Base path preset folders/files are located at
@@ -7,19 +9,21 @@ local BasePath = "xcf/presets/" -- Base path preset folders/files are located at
 --- @param PresetGroup string The group of the preset. Presets are organized by group, and presets in the same group share the same set of data variables.
 --- @param DataVarGroup string The data variable group that this preset is associated with.
 --- @param SaveUnset boolean Whether to save unset data variables using their default. Not specifying allows you to only apply changes to what you want.
-function XCF.AddPreset(PresetName, PresetGroup, DataVarGroup, SaveUnset)
+function XCF.AddPreset(PresetName, PresetGroup, DataVarGroup, Data, SaveUnset)
 	local NewPreset = {
 		Name = PresetName,
 		PresetGroup = PresetGroup,
 		DataVarGroup = DataVarGroup,
-		Data = {},
+		Data = Data or {},
 	}
 
-	for VarName, _ in pairs(XCF.DataVarsByGroupAndName[DataVarGroup] or {}) do
-		local Value = XCF.GetRealmData(VarName, DataVarGroup, not SaveUnset)
-		if Value ~= nil then
-			NewPreset.Data[DataVarGroup] = NewPreset.Data[DataVarGroup] or {}
-			NewPreset.Data[DataVarGroup][VarName] = Value
+	if not Data then
+		for VarName, _ in pairs(XCF.DataVarsByGroupAndName[DataVarGroup] or {}) do
+			local Value = XCF.GetRealmData(VarName, DataVarGroup, not SaveUnset)
+			if Value ~= nil then
+				NewPreset.Data[DataVarGroup] = NewPreset.Data[DataVarGroup] or {}
+				NewPreset.Data[DataVarGroup][VarName] = Value
+			end
 		end
 	end
 
@@ -48,9 +52,11 @@ function XCF.ApplyPreset(Name, Group)
 	local Preset = XCF.PresetsByGroupAndName[Group][Name]
 	if not Preset then return end
 
-	for Group, GroupTable in pairs(Preset.Data) do
+	PrintTable(Preset)
+	for VarGroup, GroupTable in pairs(Preset.Data) do
 		for VarName, Value in pairs(GroupTable) do
-			XCF.SetRealmData(VarName, Group, Value)
+
+			XCF.SetRealmData(VarName, VarGroup, Value)
 		end
 	end
 end
@@ -88,7 +94,7 @@ function XCF.LoadPresetsForGroup(Group)
 		local JSON = file.Read(GroupPath .. FileName, "DATA")
 		local Loaded = util.JSONToTable(JSON)
 		if Loaded and Loaded.Name and Loaded.PresetGroup then
-			XCF.AddPreset(Loaded.Name, Loaded.PresetGroup, Loaded.DataVarGroup, true, Loaded.Data)
+			XCF.AddPreset(Loaded.Name, Loaded.PresetGroup, Loaded.DataVarGroup, Loaded.Data)
 		end
 	end
 end
