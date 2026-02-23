@@ -23,6 +23,24 @@ function PanelMeta:HijackAfter(methodName, callback)
 	return old
 end
 
+--- Watches a data variable and runs a callback whenever it changes.
+function PanelMeta:WatchDataVar(Name, Scope, Callback)
+	local HookID = "XCF_Bind_" .. tostring(self) .. "_" .. Name .. "_" .. Scope
+	hook.Add("XCF_OnDataVarChanged", HookID, function(name, scope, value)
+		if name ~= Name or scope ~= Scope then return end
+		if not IsValid(self) then hook.Remove("XCF_OnDataVarChanged", HookID) return end
+
+		Callback(value)
+	end)
+end
+
+--- Convenience function to watch multiple data variables with the same callback
+function PanelMeta:WatchDataVars(DataVars, Scope, Callback)
+	for _, Name in pairs(DataVars) do
+		self:WatchDataVar(Name, Scope, Callback)
+	end
+end
+
 --- Binds a panel to a data variable, keeping them in sync in both directions.
 --- Whenever the panel's value is changed by the user or programmatically, the data variable will be updated.
 --- Whenever the data variable is updated (by the server or client), the panel's value will be updated.
@@ -50,11 +68,7 @@ function PanelMeta:BindToDataVarAdv(Name, Scope, setterName, getterName, changeN
 	self:HijackAfter(setterName, PushToDataVar)
 
 	-- DataVar -> Panel (network updates)
-	local HookID = "XCF_Bind_" .. tostring(self) .. "_" .. Name .. "_" .. Scope
-	hook.Add("XCF_OnDataVarChanged", HookID, function(name, scope, value)
-		if name ~= Name or scope ~= Scope then return end
-		if not IsValid(self) then hook.Remove("XCF_OnDataVarChanged", HookID) return end
-
+	self:WatchDataVar(Name, Scope, function(value)
 		SetValue(value)
 	end)
 

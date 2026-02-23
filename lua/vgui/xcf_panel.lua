@@ -310,9 +310,7 @@ function PANEL:AddVec3Slider(Title, Min, Max, Decimals)
 
 		local function SetValue(vec)
 			suppress = true
-			self.varX:SetValue(vec.x)
-			self.varY:SetValue(vec.y)
-			self.varZ:SetValue(vec.z)
+			self.varX:SetValue(vec.x) self.varY:SetValue(vec.y) self.varZ:SetValue(vec.z)
 			suppress = false
 		end
 
@@ -331,11 +329,7 @@ function PANEL:AddVec3Slider(Title, Min, Max, Decimals)
 		self.varZ:HijackAfter("SetValue", PushToDataVar)
 
 		-- When the datavar changes, update all sliders.
-		local HookID = "XCF_Bind_" .. tostring(self) .. "_" .. Name .. "_" .. Scope
-		hook.Add("XCF_OnDataVarChanged", HookID, function(changedKey, changedScope, value)
-			if changedKey ~= Name or changedScope ~= Scope then return end
-			if not IsValid(self) then hook.Remove("XCF_OnDataVarChanged", HookID) return end
-
+		self:WatchDataVar(Name, Scope, function(value)
 			SetValue(value)
 		end)
 
