@@ -1,4 +1,4 @@
--- TODO: Cleanup how data is loaded in from preset filse
+-- TODO: Are PresetScope and DataVarScope always going to be the same?
 
 XCF.PresetsByScopeAndName = XCF.PresetsByScopeAndName or {} -- Maps Scope -> Name -> Preset
 

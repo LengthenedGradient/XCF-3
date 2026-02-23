@@ -155,7 +155,7 @@ function XCF.CreateMainMenu(Menu)
 end
 
 -- Pop out menu tab example
-concommand.Add("open_frame", function()
+concommand.Add("acf_menu_console", function()
 	local Width, Height = ScrW(), ScrH()
 	local DFrame = vgui.Create("DFrame")
 	DFrame:SetPos(Width * 0.25, Height * 0.25)

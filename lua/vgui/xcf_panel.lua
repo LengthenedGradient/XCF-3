@@ -150,19 +150,27 @@ function PANEL:AddComboBox()
 	return Panel
 end
 
-function PANEL:AddCollapsible(Text, State)
+function PANEL:AddCollapsible(Text, State, Icon)
 	if State == nil then State = true end
 
 	local Category = self:AddPanel("DCollapsibleCategory")
 	Category:SetLabel(Text or "Title")
 	Category.Header:SetFont("XCF_Title")
-
-	Category:DoExpansion(State)
+	Category.Header:SetSize(0, 24)
+	Category.Image = Category.Header:Add("DImage")
+	Category.Image:SetPos(4, 4)
+	Category.Image:SetSize(16, 16)
+	if Icon ~= nil then
+		Category.Header:SetTextInset(26, 0)
+		Category.Image:Show()
+		Category.Image:SetImage(Icon)
+	end
 
 	local Base = vgui.Create("XCF_Panel")
 	Base:DockMargin(5, 5, 5, 5)
 
 	Category:SetContents(Base)
+	Category:DoExpansion(State)
 
 	return Base, Category
 end
@@ -262,6 +270,7 @@ function PANEL:AddPresetsBar(PresetScope)
 end
 
 -- TODO: Add more options etc.
+-- TODO: Use DAdjustableModelPanel instead and require user to click to focus, then keys are disabled.
 function PANEL:AddModelPreview(Model)
 	local ModelPanel    = self:AddPanel("DModelPanel")
 
