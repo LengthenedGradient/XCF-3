@@ -30,7 +30,7 @@ do -- Macros for defining data variables and their types
 			Name = Name,
 			Scope = Scope,
 			UUID = VarCounter,
-			Type = Type,
+			Type = XCF.DataVarTypesByName[Type],
 			Default = Default,
 			Options = Options or {},
 			Values = ExistingDataVar and ExistingDataVar.Values or {},
@@ -298,9 +298,9 @@ do -- Defining default data variables and types
 	----------------------------------------------------------
 
 	-- Test variable
-	XCF.DefineDataVar("TestVar", "TestScope", XCF.DataVarTypesByName.String)
+	XCF.DefineDataVar("TestVar", "TestScope", "String", "TestValue")
 
-	XCF.DefineDataVar("ServerDataAllowAdmin", "ServerSettings", XCF.DataVarTypesByName.Bool, false)
+	XCF.DefineDataVar("ServerDataAllowAdmin", "ServerSettings", "Bool", false)
 
-	XCF.DefineDataVar("SpawnClass", "ToolGun", XCF.DataVarTypesByName.String, "xcf_testent")
+	XCF.DefineDataVar("SpawnClass", "ToolGun", "String", "xcf_testent")
 end
