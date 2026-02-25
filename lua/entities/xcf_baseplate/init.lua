@@ -3,21 +3,13 @@ AddCSLuaFile("shared.lua")
 
 include("shared.lua")
 
-function ENT:Initialize()
-	self:SetScaledModel("models/hunter/blocks/cube075x075x075.mdl")
-
-	self:PhysicsInit(SOLID_VPHYSICS)
-	self:SetMoveType(MOVETYPE_VPHYSICS)
-	self:SetSolid(SOLID_VPHYSICS)
-
-	WireLib.CreateInputs(self, {Roll = "Number"})
-	WireLib.CreateOutputs(self, {State = "Number", Col = "Vector"})
-
-	self:UpdateOverlay()
+function ENT:XCF_PostUpdateEntityData()
+	self:SetSize(self.XCF_LiveData.xcf_baseplate.Size)
 end
 
 function ENT:XCF_PreSpawn()
-
+	self:SetScaledModel("models/holograms/cube.mdl")
+	self:SetMaterial("hunter/myplastic")
 end
 
 function ENT:XCF_PostSpawn(_, _, _, _)

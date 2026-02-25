@@ -42,12 +42,13 @@ function XCF.UpdateEntityData(Entity, DataVarKVs)
 	return Result, Message
 end
 
-function XCF.AutoRegister(ENT, Class, Scope)
+function XCF.AutoRegister(ENT, Class, _)
 	print("Autoregistered: ", ENT.PrintName)
 
 	function ENT:Update(DataVarKVs)
 		XCF.SaveEntity(self)
 		self.XCF_LiveData = DataVarKVs
+		self:XCF_PostUpdateEntityData()
 		XCF.RestoreEntity(self)
 	end
 
