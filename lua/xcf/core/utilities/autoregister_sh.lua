@@ -1,7 +1,7 @@
 XCF.EntityTables = XCF.EntityTables or {}
 
 -- External entry point
-function XCF.SpawnEntity(Class, Player, Pos, Angle, DataVarKVs)
+function XCF.SpawnEntity(Class, Player, Pos, Angle, DataVarKVs, NoUndo)
 	local EntityTable = XCF.EntityTables[Class]
 	if not EntityTable then return false, Class .. " is not a registered XCF entity class." end
 	if not EntityTable.Spawn then return false, Class .. " does not have a spawn function." end
@@ -15,16 +15,32 @@ function XCF.SpawnEntity(Class, Player, Pos, Angle, DataVarKVs)
 
 	Entity.Owner = Player
 
+	if not NoUndo then
+		undo.Create(Entity.Name or Class)
+		undo.AddEntity(Entity)
+		undo.SetPlayer(Player)
+		undo.Finish()
+	end
+
 	return true, Entity
 end
 
-function XCF.AutoRegister(ENT, Class, DataVarScope)
+function XCF.UpdateEntity(Entity, DataVarKVs)
+	if not IsValid(Entity) then return false, "Invalid entity." end
+
+	print("Updating Entity", Entity, DataVarKVs)
+
+	return true
+end
+
+function XCF.AutoRegister(ENT, Class)
+	print("Autoregistered: ", ENT.PrintName)
+
 	local EntTable = XCF.EntityTables[Class] or {}
 	XCF.EntityTables[Class] = EntTable
 
 	-- Entity specific spawn function
 	function EntTable.Spawn(Player, Pos, Angle, DataVarKVs)
-		print("EntTable.Spawn", Player, Pos, Angle, DataVarKVs)
 		local New = ents.Create(Class)
 		if not IsValid(New) then return end
 
@@ -44,7 +60,7 @@ function XCF.AutoRegister(ENT, Class, DataVarScope)
 	end
 
 	-- Duplicator entry point
-	local DataVarKeys = XCF.DataVarScopesOrdered[DataVarScope]
+	local DataVarKeys = XCF.DataVarScopesOrdered[Class]
 	local function SpawnFunction(Player, Pos, Angle, ...)
 		-- Collect the extra arguments passed in by duplicator into a KV format
 		local Values = {...}

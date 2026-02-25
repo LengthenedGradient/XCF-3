@@ -166,16 +166,16 @@ do -- Managing data variable synchronization and networking
 		return Value or (not IgnoreUnset and DataVar.Default)
 	end
 
-	--- Sets all data variables at once using a nested table format: Data[Scope][Name] = Value.
-	function XCF.SetDataVars(Data, Player)
+	--- Sets all data variables at once using a nested table format: KVs[Scope][Name] = Value.
+	function XCF.SetDataVars(KVs, Player)
 		for scope, _ in pairs(XCF.DataVarsByScopeAndName) do
 			for name, _ in pairs(XCF.DataVarsByScopeAndName[scope] or {}) do
-				if Data[scope] and Data[scope][name] ~= nil then XCF.SetDataVar(name, scope, Data[scope][name], Player) end
+				if KVs[scope] and KVs[scope][name] ~= nil then XCF.SetDataVar(name, scope, KVs[scope][name], Player) end
 			end
 		end
 	end
 
-	--- Gets all data variables at once in a nested table format: Data[Scope][Name] = Value.
+	--- Gets all data variables at once in a nested table format: KVs[Scope][Name] = Value.
 	function XCF.GetDataVars(Scope, Player, IgnoreUnset)
 		local Result = {}
 		for scope, _ in pairs(XCF.DataVarsByScopeAndName) do

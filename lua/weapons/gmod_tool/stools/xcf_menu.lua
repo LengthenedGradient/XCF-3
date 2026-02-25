@@ -14,9 +14,14 @@ function TOOL:LeftClick(Trace)
 
 	local Player = self:GetOwner()
 	local SpawnClass = XCF.GetDataVar("SpawnClass", "ToolGun", Player)
+	local DataVarKVs = XCF.GetDataVars(SpawnClass, Player)
 	if not SpawnClass or SpawnClass == "" then return false end
 
 	local Entity = Trace.Entity
+	if IsValid(Entity) and Entity:GetClass() == SpawnClass then
+		XCF.UpdateEntity(Entity, DataVarKVs)
+		return true
+	end
 
 	local Position = Trace.HitPos + Trace.HitNormal * 128
 	local Angles   = Trace.HitNormal:Angle():Up():Angle()
@@ -37,7 +42,7 @@ function TOOL:LeftClick(Trace)
 		print(Player, "Error", "Couldn't create entity" .. Result)
 	end
 
-	return true
+	return Success
 end
 
 function TOOL:RightClick(_)
