@@ -29,6 +29,8 @@ function TOOL:LeftClick(Trace)
 	if Success then
 		local PhysObj = Result:GetPhysicsObject()
 
+		XCF.DropToFloor(Result)
+
 		Result:SetSpawnEffect(true)
 
 		if IsValid(PhysObj) then

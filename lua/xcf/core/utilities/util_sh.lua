@@ -33,3 +33,31 @@ do -- Networked notifications
 		end
 	end
 end
+
+do
+	local Offset = Vector(0, 0, 256)
+
+	--- Shared implementation of UTIL_DropToFloor (roughly).
+	--- @param Entity any The entity to try dropping to the floor
+	function XCF.DropToFloor(Entity)
+		Entity:SetGroundEntity(NULL)
+
+		local EntPos = Entity:GetPos()
+		local EntCollisionGroup = Entity:GetCollisionGroup()
+		local TraceCollisionGroup = EntCollisionGroup == COLLISION_GROUP_PUSHAWAY and COLLISION_GROUP_NONE or EntCollisionGroup
+		local Trace = util.TraceEntity({
+			start = EntPos,
+			endpos = EntPos - Offset,
+			collisiongroup = TraceCollisionGroup,
+			filter = Entity,
+		}, Entity)
+
+		if Trace.AllSolid then return -1 end
+		if Trace.Fraction == 1 then return 0 end
+
+		Entity:SetPos(Trace.HitPos)
+		Entity:SetGroundEntity(Trace.Entity)
+
+		return 1
+	end
+end
