@@ -14,8 +14,10 @@ function TOOL:LeftClick(Trace)
 
 	local Player = self:GetOwner()
 	local SpawnClass = XCF.GetDataVar("SpawnClass", "ToolGun", Player)
-	local DataVarKVs = XCF.GetDataVars(SpawnClass, Player)
 	if not SpawnClass or SpawnClass == "" then return false end
+
+	local DataVarKVs = XCF.GetDataVars(SpawnClass, Player)
+	if DataVarKVs then DataVarKVs = DataVarKVs[SpawnClass] end -- Returned results are in the format {SpawnClass = {DataVarKVs}}
 
 	local Entity = Trace.Entity
 	if IsValid(Entity) and Entity:GetClass() == SpawnClass then
@@ -29,7 +31,7 @@ function TOOL:LeftClick(Trace)
 	if Success then
 		local PhysObj = Result:GetPhysicsObject()
 
-		XCF.DropToFloor(Result)
+		New:XCF_PostMenuSpawn()
 
 		Result:SetSpawnEffect(true)
 

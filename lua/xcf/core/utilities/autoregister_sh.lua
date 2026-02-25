@@ -1,8 +1,27 @@
 -- TODO: Localize globals?
+
+--[[
+Call Order:
+	XCF.SpawnEntity <- (Duplicator / Tool gun spawn)
+	XCF_PreSpawn
+	XCF.UpdateEntityData <- (Tool gun update)
+	Entity.Update
+	XCF_PostUpdateEntityData
+	XCF_PostSpawn
+	PostEntityPaste <- (Duplicator only)
+	XCF_PostMenuSpawn <- (Tool gun only)
+
+Notable variables:
+	XCF_LiveData: The current live data of the entity, updated whenever the entity is spawned or updated. Initialized by the toolgun on spawn, or by the duplicator when pasting.
+		Certain datavar types like linked entities will have garbage data until PostEntityPaste is called. Do not use them until then.
+	XCF_DupeData: A copy of the live data at the time of duplication. PostEntityPaste updates it immediately before copying. It's really just for flushing data, don't use it.
+]]--
+
 XCF.EntityTables = XCF.EntityTables or {}
 
 -- Public entry point
 function XCF.SpawnEntity(Class, Player, Pos, Angle, DataVarKVs, FromDupe, NoUndo)
+	print("XCF.SpawnEntity")
 	local EntityTable = XCF.EntityTables[Class]
 	if not EntityTable then return false, Class .. " is not a registered XCF entity class." end
 	if not EntityTable.Spawn then return false, Class .. " does not have a spawn function." end
@@ -28,6 +47,7 @@ end
 
 -- Public entry point
 function XCF.UpdateEntityData(Entity, DataVarKVs)
+	print("XCF.UpdateEntityData")
 	if not IsValid(Entity) then return false, "Can't update invalid entities." end
 	if not isfunction(Entity.Update) then return false, "This entity does not support updating." end
 
@@ -47,19 +67,26 @@ function XCF.AutoRegister(ENT, Class, _)
 
 	function ENT:Update(DataVarKVs)
 		XCF.SaveEntity(self)
-		self.XCF_LiveData = DataVarKVs
+		self.XCF_LiveData = table.Copy(DataVarKVs)
 		self:XCF_PostUpdateEntityData()
 		XCF.RestoreEntity(self)
 	end
 
+	if not ENT.XCF_PostMenuSpawn then
+		function ENT:XCF_PostMenuSpawn()
+			XCF.DropToFloor(self)
+		end
+	end
+
 	function ENT:PreEntityCopy()
+		print("PreEntityCopy")
 		self.XCF_DupeData = table.Copy(self.XCF_LiveData)
 
 		self.BaseClass.PreEntityCopy(self)
 	end
 
 	function ENT:PostEntityPaste(Player, Ent, CreatedEntities)
-		self.XCF_LiveData = table.Copy(self.XCF_DupeData)
+		print("PostEntityPaste")
 
 		Ent.BaseClass.PostEntityPaste(Ent, Player, Ent, CreatedEntities)
 	end
@@ -69,6 +96,7 @@ function XCF.AutoRegister(ENT, Class, _)
 
 	-- Entity specific spawn function
 	function EntTable.Spawn(Player, Pos, Angle, DataVarKVs, FromDupe)
+		print("EntityTable.Spawn")
 		local New = ents.Create(Class)
 		if not IsValid(New) then return end
 
