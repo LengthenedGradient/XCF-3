@@ -274,6 +274,14 @@ do -- Defining default data variables and types
 
 	----------------------------------------------------------
 
+	-- Advanced types
+	local StoredEntityDV = XCF.DefineDataVarType("StoredEntity")
+	StoredEntityDV.PreCopy = function(Value) return Value:EntIndex() end
+	StoredEntityDV.PostPaste = function(Value, CreatedEnts) return CreatedEnts[Value] end
+	StoredEntityDV.CreatePanel = function(Menu, DataVar) return Menu:AddCheckbox(DataVar.Name) end
+
+	----------------------------------------------------------
+
 	-- Test variable
 	XCF.DefineDataVar("TestVar", "TestScope", "String", "TestValue")
 

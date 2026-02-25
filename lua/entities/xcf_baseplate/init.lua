@@ -16,6 +16,18 @@ function ENT:Initialize()
 	self:UpdateOverlay()
 end
 
+function ENT:XCF_PreSpawn()
+
+end
+
+function ENT:XCF_PostSpawn(_, _, _, _)
+
+end
+
+function ENT:XCF_PostMenuSpawn()
+	print("Spawned From Menu")
+end
+
 function ENT:UpdateOverlay()
 	self:SetOverlayText("test")
 end
@@ -23,3 +35,5 @@ end
 function ENT:Think()
 	self:UpdateOverlay()
 end
+
+XCF.AutoRegister(ENT, "xcf_baseplate", "xcf_baseplate")
