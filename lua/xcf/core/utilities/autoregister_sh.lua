@@ -42,13 +42,25 @@ function XCF.UpdateEntityData(Entity, DataVarKVs)
 	return Result, Message
 end
 
-function XCF.AutoRegister(ENT, Class)
+function XCF.AutoRegister(ENT, Class, Scope)
 	print("Autoregistered: ", ENT.PrintName)
 
 	function ENT:Update(DataVarKVs)
 		XCF.SaveEntity(self)
-		
+		self.XCF_LiveData = DataVarKVs
 		XCF.RestoreEntity(self)
+	end
+
+	function ENT:PreEntityCopy()
+		self.XCF_DupeData = table.Copy(self.XCF_LiveData)
+
+		self.BaseClass.PreEntityCopy(self)
+	end
+
+	function ENT:PostEntityPaste(Player, Ent, CreatedEntities)
+		self.XCF_LiveData = table.Copy(self.XCF_DupeData)
+
+		Ent.BaseClass.PostEntityPaste(Ent, Player, Ent, CreatedEntities)
 	end
 
 	local EntTable = XCF.EntityTables[Class] or {}
@@ -69,6 +81,8 @@ function XCF.AutoRegister(ENT, Class)
 		Player:AddCount("_" .. Class, New)
 		Player:AddCleanup(Class, New)
 
+		New.XCF_LiveData = {}
+
 		XCF.UpdateEntityData(New, DataVarKVs)
 		if New.XCF_PostSpawn then
 			New:XCF_PostSpawn(Player, Pos, Angle, DataVarKVs, FromDupe)
@@ -78,16 +92,11 @@ function XCF.AutoRegister(ENT, Class)
 	end
 
 	-- Duplicator entry point
-	local DataVarKeys = XCF.DataVarScopesOrdered[Class]
-	local function SpawnFunction(Player, Pos, Angle, ...)
+	local function SpawnFunction(Player, Pos, Angle, DataVarKVs)
 		-- Collect the extra arguments passed in by duplicator into a KV format
-		local Values = {...}
-		local DataVarKVs = {}
-		for i, Key in ipairs(DataVarKeys) do DataVarKVs[Key] = Values[i] end
-
 		local _, Entity = XCF.SpawnEntity(Class, Player, Pos, Angle, DataVarKVs, true)
 		return Entity
 	end
 
-	duplicator.RegisterEntityClass(Class, SpawnFunction, "Pos", "Angle", unpack(DataVarKeys))
+	duplicator.RegisterEntityClass(Class, SpawnFunction, "Pos", "Angle", "XCF_DupeData")
 end

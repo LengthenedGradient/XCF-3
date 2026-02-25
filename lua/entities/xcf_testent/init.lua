@@ -40,4 +40,4 @@ function ENT:Think()
 	self:UpdateOverlay()
 end
 
-XCF.AutoRegister(ENT, "xcf_testent")
+XCF.AutoRegister(ENT, "xcf_testent", "xcf_testent")

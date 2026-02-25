@@ -4,9 +4,9 @@ local function CreateMenu(MenuPanel)
 	MenuPanel:AddLabel("Cube that changes state randomly when its wire input is triggered.\nInteracts with linked boxes.")
 
 	local Base = MenuPanel:AddCollapsible("Settings")
-	Base:AddPresetsBar("FateCube")
+	Base:AddPresetsBar("xcf_testent")
 	Base:AddModelPreview("models/hunter/blocks/cube075x075x075.mdl"):XCFDebug("Model")
-	XCF.CreatePanelsFromDataVars(Base, "FateCube")
+	XCF.CreatePanelsFromDataVars(Base, "xcf_testent")
 end
 
 XCF.AddMenuItem(1, "Fate Cube", "icon16/bricks.png", CreateMenu, "Testing")

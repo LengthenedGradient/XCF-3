@@ -22,7 +22,6 @@ function TOOL:LeftClick(Trace)
 		XCF.UpdateEntityData(Entity, DataVarKVs)
 		return true
 	end
-
 	local Position = Trace.HitPos + Trace.HitNormal * 128
 	local Angles   = Trace.HitNormal:Angle():Up():Angle()
 	local Success, Result = XCF.SpawnEntity(SpawnClass, Player, Position, Angles, DataVarKVs, false)
@@ -36,7 +35,7 @@ function TOOL:LeftClick(Trace)
 			PhysObj:EnableMotion(false)
 		end
 	else
-		print(Player, "Error", "Couldn't create entity" .. Result)
+		print(Player, "Error", "Couldn't create entity: " .. Result)
 	end
 
 	return Success
