@@ -19,19 +19,16 @@ function TOOL:LeftClick(Trace)
 
 	local Entity = Trace.Entity
 	if IsValid(Entity) and Entity:GetClass() == SpawnClass then
-		XCF.UpdateEntity(Entity, DataVarKVs)
+		XCF.UpdateEntityData(Entity, DataVarKVs)
 		return true
 	end
 
 	local Position = Trace.HitPos + Trace.HitNormal * 128
 	local Angles   = Trace.HitNormal:Angle():Up():Angle()
-	local Success, Result = XCF.SpawnEntity(SpawnClass, Player, Position, Angles, DataVarKVs)
+	local Success, Result = XCF.SpawnEntity(SpawnClass, Player, Position, Angles, DataVarKVs, false)
 
 	if Success then
 		local PhysObj = Result:GetPhysicsObject()
-		if Result.XCF_PostMenuSpawn then
-			Result:XCF_PostMenuSpawn(SpawnClass, Player, Position, Angles, DataVarKVs)
-		end
 
 		Result:SetSpawnEffect(true)
 
