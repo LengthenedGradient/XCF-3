@@ -3,18 +3,15 @@ local XCF = XCF
 do -- Macros for defining data variables and their types
 	XCF.DataVarTypesByName = XCF.DataVarTypesByName or {} -- Maps name -> type definition
 
-	local TypeCounter = 1
-	function XCF.DefineDataVarType(Name, ReadFunc, WriteFunc, Options)
-		local NewDataVarType = {
-			Name = Name,
-			UUID = TypeCounter,
-			Read = ReadFunc,
-			Write = WriteFunc,
-			Options = Options or {},
-		}
-		TypeCounter = TypeCounter + 1
-		XCF.DataVarTypesByName[Name] = NewDataVarType
-		return NewDataVarType
+	function XCF.DefineDataVarType(Name)
+		local DataVarType = XCF.DataVarTypesByName[Name]
+		if not DataVarType then
+			DataVarType = {
+				Name = Name
+			}
+			XCF.DataVarTypesByName[Name] = DataVarType
+		end
+		return DataVarType
 	end
 
 	XCF.DataVars = XCF.DataVars or {} -- Maps UUID -> variable definition
@@ -24,31 +21,30 @@ do -- Macros for defining data variables and their types
 	--- Defines data variable on the client
 	local VarCounter = 1
 	function XCF.DefineDataVar(Name, Scope, Type, Default, Options)
-		local ExistingDataVar = XCF.DataVarsByScopeAndName[Scope] and XCF.DataVarsByScopeAndName[Scope][Name]
+		local DataVar = XCF.DataVarsByScopeAndName[Scope] and XCF.DataVarsByScopeAndName[Scope][Name]
+		if not DataVar then
+			DataVar = {
+				Name = Name,
+				Scope = Scope,
+				UUID = VarCounter,
+				Values = {},
+			}
 
-		local NewDataVar = {
-			Name = Name,
-			Scope = Scope,
-			UUID = VarCounter,
-			Type = XCF.DataVarTypesByName[Type],
-			Default = Default,
-			Options = Options or {},
-			Values = ExistingDataVar and ExistingDataVar.Values or {},
-		}
-
-		-- Only change UUID / Order if this is a new variable.
-		if not ExistingDataVar then
 			-- Add to ordered list of scopes
 			XCF.DataVarScopesOrdered[Scope] = XCF.DataVarScopesOrdered[Scope] or {}
 			table.insert(XCF.DataVarScopesOrdered[Scope], Name)
-			XCF.DataVars[VarCounter] = NewDataVar
+			XCF.DataVars[VarCounter] = DataVar
 			VarCounter = VarCounter + 1
+
+			XCF.DataVarsByScopeAndName[Scope] = XCF.DataVarsByScopeAndName[Scope] or {}
+			XCF.DataVarsByScopeAndName[Scope][Name] = DataVar
 		end
 
-		XCF.DataVarsByScopeAndName[Scope] = XCF.DataVarsByScopeAndName[Scope] or {}
-		XCF.DataVarsByScopeAndName[Scope][Name] = NewDataVar
+		DataVar.Type = XCF.DataVarTypesByName[Type]
+		DataVar.Default = Default
+		DataVar.Options = Options
 
-		return NewDataVar
+		return DataVar
 	end
 end
 
@@ -81,7 +77,7 @@ do -- Managing data variable synchronization and networking
 
 		-- Only do stuff if something changes
 		local DataVar = XCF.DataVarsByScopeAndName[Scope][Name]
-		if DataVar.Values[ToSync] ~= Value then
+		if not DataVar.Hidden and DataVar.Values[ToSync] ~= Value then
 			DataVar.Values[ToSync] = Value
 
 			local SyncServer = ToSync == "Server"
@@ -191,11 +187,11 @@ end
 
 do -- Automatic Menu Generation
 	function XCF.CreatePanelFromDataVar(Menu, DataVar)
-		if not DataVar.Type.Options.CreatePanel then return end
-		local Panel = DataVar.Type.Options.CreatePanel(Menu, DataVar)
+		if not DataVar.Type.CreatePanel then return end
+		local Panel = DataVar.Type.CreatePanel(Menu, DataVar)
 		-- print(Panel, DataVar.Name, DataVar.Scope)
 		if Panel.BindToDataVar then Panel:BindToDataVar(DataVar.Name, DataVar.Scope) end
-		if DataVar.Options.Tooltip then Panel:SetTooltip(DataVar.Options.Tooltip) end
+		if DataVar.Tooltip then Panel:SetTooltip(DataVar.Tooltip) end
 		return Panel
 	end
 
@@ -212,57 +208,68 @@ do -- Automatic Menu Generation
 end
 
 do -- Defining default data variables and types
-	local CreateSliderMenu = function(Menu, DataVar)
-		return Menu:AddSlider(DataVar.Name, DataVar.Options.Min, DataVar.Options.Max, 2)
-	end
-
-	local CreateWangMenu = function(Menu, DataVar)
-		return Menu:AddNumberWang(DataVar.Name, DataVar.Options.Min, DataVar.Options.Max, 2)
-	end
+	local CreateSliderMenu = function(Menu, DataVar) return Menu:AddSlider(DataVar.Name, DataVar.Options.Min, DataVar.Options.Max, 2) end
+	local CreateWangMenu = function(Menu, DataVar) return Menu:AddNumberWang(DataVar.Name, DataVar.Options.Min, DataVar.Options.Max, 2) end
 
 	-- Basic types
-	XCF.DefineDataVarType("Bool", net.ReadBool, net.WriteBool, {
-		CreatePanel = function(Menu, DataVar) return Menu:AddCheckbox(DataVar.Name) end,
-	})
+	local BoolDV = XCF.DefineDataVarType("Bool")
+	BoolDV.Read, BoolDV.Write = net.ReadBool, net.WriteBool
+	BoolDV.CreatePanel = function(Menu, DataVar) return Menu:AddCheckbox(DataVar.Name) end
 
-	XCF.DefineDataVarType("String", net.ReadString, net.WriteString, {
-		CreatePanel = function(Menu, DataVar) return Menu:AddTextEntry(DataVar.Name) end,
-	})
+	local StringDV = XCF.DefineDataVarType("String")
+	StringDV.Read, StringDV.Write = net.ReadString, net.WriteString
+	StringDV.CreatePanel = function(Menu, DataVar) return Menu:AddTextEntry(DataVar.Name) end
 
-	XCF.DefineDataVarType("Float", net.ReadFloat, net.WriteFloat, {
-		CreatePanel = CreateSliderMenu,
-	})
+	local FloatDV = XCF.DefineDataVarType("Float")
+	FloatDV.Read, FloatDV.Write = net.ReadFloat, net.WriteFloat
+	FloatDV.CreatePanel = CreateSliderMenu
 
-	XCF.DefineDataVarType("Double", net.ReadDouble, net.WriteDouble, {
-		CreatePanel = CreateSliderMenu,
-	})
+	local DoubleDV = XCF.DefineDataVarType("Double")
+	DoubleDV.Read, DoubleDV.Write = net.ReadDouble, net.WriteDouble
+	DoubleDV.CreatePanel = CreateSliderMenu
 
-	XCF.DefineDataVarType("Color", net.ReadColor, net.WriteColor, {})
-	XCF.DefineDataVarType("Angle", net.ReadAngle, net.WriteAngle, {})
+	local ColorDV = XCF.DefineDataVarType("Color")
+	ColorDV.Read, ColorDV.Write = net.ReadColor, net.WriteColor
 
-	XCF.DefineDataVarType("Vector", net.ReadVector, net.WriteVector, {
-		CreatePanel = function(Menu, DataVar) return Menu:AddVec3Slider(DataVar.Name, DataVar.Options.Min, DataVar.Options.Max, 2) end,
-	})
+	local AngleDV = XCF.DefineDataVarType("Angle")
+	AngleDV.Read, AngleDV.Write = net.ReadAngle, net.WriteAngle
 
-	XCF.DefineDataVarType("Normal", net.ReadNormal, net.WriteNormal, {})
-	XCF.DefineDataVarType("Entity", net.ReadEntity, net.WriteEntity, {})
-	XCF.DefineDataVarType("Player", net.ReadPlayer, net.WritePlayer, {})
-	XCF.DefineDataVarType("Table", net.ReadTable, net.WriteTable, {})
-	XCF.DefineDataVarType("Data", net.ReadData, net.WriteData, {})
-	XCF.DefineDataVarType("Bit", net.ReadBit, net.WriteBit, {})
+	local VectorDV = XCF.DefineDataVarType("Vector")
+	VectorDV.Read, VectorDV.Write = net.ReadVector, net.WriteVector
+	VectorDV.CreatePanel = function(Menu, DataVar) return Menu:AddVec3Slider(DataVar.Name, DataVar.Options.Min, DataVar.Options.Max, 2) end
+
+	local NormalDV = XCF.DefineDataVarType("Normal")
+	NormalDV.Read, NormalDV.Write = net.ReadNormal, net.WriteNormal
+
+	local EntityDV = XCF.DefineDataVarType("Entity")
+	EntityDV.Read, EntityDV.Write = net.ReadEntity, net.WriteEntity
+
+	local PlayerDV = XCF.DefineDataVarType("Player")
+	PlayerDV.Read, PlayerDV.Write = net.ReadPlayer, net.WritePlayer
+
+	local TableDV = XCF.DefineDataVarType("Table")
+	TableDV.Read, TableDV.Write = net.ReadTable, net.WriteTable
+
+	local DataDV = XCF.DefineDataVarType("Data")
+	DataDV.Read, DataDV.Write = net.ReadData, net.WriteData
+
+	local BitDV = XCF.DefineDataVarType("Bit")
+	BitDV.Read, BitDV.Write = net.ReadBit, net.WriteBit
 
 	-- Signed integers (1 to 32 bits)
 	for i = 1, 32 do
-		XCF.DefineDataVarType("Int" .. i, function() return net.ReadInt(i) end, function(v) net.WriteInt(v, i) end, {
-			CreatePanel = CreateWangMenu,
-		})
+		local IntDV = XCF.DefineDataVarType("Int" .. i)
+		IntDV.Read = function() return net.ReadInt(i) end
+		IntDV.Write = function(v) net.WriteInt(v, i) end
+		IntDV.CreatePanel = CreateWangMenu
 	end
 
 	-- Unsigned integers (1 to 32 bits)
 	for i = 1, 32 do
-		XCF.DefineDataVarType("UInt" .. i, function() return net.ReadUInt(i) end, function(v) net.WriteUInt(v, i) end, {
-			CreatePanel = CreateWangMenu,
-		})
+		local UIntDV = XCF.DefineDataVarType("UInt" .. i)
+		UIntDV.Read = function() return net.ReadUInt(i) end
+		UIntDV.Write = function(v) net.WriteUInt(v, i) end
+		UIntDV.CreatePanel = CreateWangMenu
 	end
 
 	----------------------------------------------------------
