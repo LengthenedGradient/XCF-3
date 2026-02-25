@@ -2,18 +2,21 @@
 
 --[[
 Call Order:
-	XCF.SpawnEntity <- (Duplicator / Tool gun spawn)
-	XCF_PreSpawn
-	XCF.UpdateEntityData <- (Tool gun update)
-	Entity.Update
-	XCF_PostUpdateEntityData
-	XCF_PostSpawn
-	PostEntityPaste <- (Duplicator only)
-	XCF_PostMenuSpawn <- (Tool gun only)
+	XCF.SpawnEntity: Entry point for spawning an entity <- (Duplicator / Tool gun spawn)
+	EntTable.Spawn: Internal Class specific spawn function. Don't use this.
+	XCF_PreSpawn: Called before the entity is spawned.
+	XCF.UpdateEntityData: Entry point for updating an entity's data variables. <- (Tool gun update)
+	Entity.Update: Internal function that actually updates the entity's data variables. Don't use this.
+	XCF_PostUpdateEntityData: Called after the entity's data variables have been updated.
+	XCF_PostSpawn: Called after the entity is spawned and updated with the initial data variables.
+	OnDuplicated: Called on any entity after it has been created by the duplicator and before any bone/entity modifiers have been applied. <- (Duplicator only)
+	PostEntityPaste: Called after the duplicator pastes the entity, after the bone/entity modifiers have been applied to the entity. <- (Duplicator only)
+	XCF_PostMenuSpawn: Called after all the above, if created with the toolgun <- (Tool gun only)
+	---
 
 Notable variables:
 	XCF_LiveData: The current live data of the entity, updated whenever the entity is spawned or updated. Initialized by the toolgun on spawn, or by the duplicator when pasting.
-		Certain datavar types like linked entities will have garbage data until PostEntityPaste is called. Do not use them until then.
+		Certain datavar types like linked entities will have unsafe/garbage data until PostEntityPaste is called. Do not use them before then.	
 	XCF_DupeData: A copy of the live data at the time of duplication. PostEntityPaste updates it immediately before copying. It's really just for flushing data, don't use it.
 ]]--
 
@@ -78,16 +81,32 @@ function XCF.AutoRegister(ENT, Class, _)
 		end
 	end
 
+	local OnRemove = ENT.OnRemove
+	function ENT:OnRemove(IsFullUpdate)
+		print("OnRemove", self, IsFullUpdate)
+		if OnRemove then OnRemove(self, IsFullUpdate) end
+		WireLib.Remove(self)
+	end
+
+	local PreEntityCopy = ENT.PreEntityCopy
 	function ENT:PreEntityCopy()
 		print("PreEntityCopy")
 		self.XCF_DupeData = table.Copy(self.XCF_LiveData)
-
+		if PreEntityCopy then PreEntityCopy(self) end
 		self.BaseClass.PreEntityCopy(self)
 	end
 
-	function ENT:PostEntityPaste(Player, Ent, CreatedEntities)
-		print("PostEntityPaste")
+	local OnDuplicated = ENT.OnDuplicated
+	function ENT:OnDuplicated(EntTable)
+		print("OnDuplicated", self, EntTable)
+		if OnDuplicated then OnDuplicated(self, EntTable) end
+		self.BaseClass.OnDuplicated(self, EntTable)
+	end
 
+	local PostEntityPaste = ENT.PostEntityPaste
+	function ENT:PostEntityPaste(Player, Ent, CreatedEntities)
+		print("PostEntityPaste", Ent, CreatedEntities)
+		if PostEntityPaste then PostEntityPaste(Ent, Player, Ent, CreatedEntities) end
 		Ent.BaseClass.PostEntityPaste(Ent, Player, Ent, CreatedEntities)
 	end
 
