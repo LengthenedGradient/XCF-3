@@ -14,36 +14,44 @@ function TOOL:LeftClick(Trace)
 
 	local Player = self:GetOwner()
 	local SpawnClass = XCF.GetDataVar("SpawnClass", "ToolGun", Player)
-	if not SpawnClass or SpawnClass == "" then return false end
-
-	local DataVarKVs = XCF.GetDataVars(SpawnClass, Player)
-	if DataVarKVs then DataVarKVs = DataVarKVs[SpawnClass] end -- Returned results are in the format {SpawnClass = {DataVarKVs}}
-
 	local Entity = Trace.Entity
-	if IsValid(Entity) and Entity:GetClass() == SpawnClass then
-		XCF.UpdateEntityData(Entity, DataVarKVs)
-		return true
-	end
-	local Position = Trace.HitPos + Trace.HitNormal * 128
-	local Angles   = Trace.HitNormal:Angle():Up():Angle()
-	local Success, Result = XCF.SpawnEntity(SpawnClass, Player, Position, Angles, DataVarKVs, false)
 
-	if Success then
-		local PhysObj = Result:GetPhysicsObject()
+	if not Player:KeyDown(IN_SPEED) then -- Spawning/Updating
+		if not SpawnClass or SpawnClass == "" then return false end
 
-		Result:XCF_PostMenuSpawn()
-		XCF.DropToFloor(Result)
+		local DataVarKVs = XCF.GetDataVars(SpawnClass, Player)
+		if DataVarKVs then DataVarKVs = DataVarKVs[SpawnClass] end -- Returned results are in the format {SpawnClass = {DataVarKVs}}
 
-		Result:SetSpawnEffect(true)
-
-		if IsValid(PhysObj) then
-			PhysObj:EnableMotion(false)
+		if IsValid(Entity) and Entity:GetClass() == SpawnClass then
+			XCF.UpdateEntityData(Entity, DataVarKVs)
+			return true
 		end
-	else
-		print(Player, "Error", "Couldn't create entity: " .. Result)
-	end
+		local Position = Trace.HitPos + Trace.HitNormal * 128
+		local Angles   = Trace.HitNormal:Angle():Up():Angle()
+		local Success, Result = XCF.SpawnEntity(SpawnClass, Player, Position, Angles, DataVarKVs, false)
 
-	return Success
+		if Success then
+			local PhysObj = Result:GetPhysicsObject()
+
+			Result:XCF_PostMenuSpawn()
+			XCF.DropToFloor(Result)
+
+			Result:SetSpawnEffect(true)
+
+			if IsValid(PhysObj) then
+				PhysObj:EnableMotion(false)
+			end
+		else
+			print(Player, "Error", "Couldn't create entity: " .. Result)
+		end
+		return Success
+	else -- Copying settings
+		if not IsValid(Entity) then return false end
+		if Entity:GetClass() ~= SpawnClass then return false end
+
+		local DataVarKVs = Entity.XCF_LiveData
+		XCF.SetDataVars({[SpawnClass] = DataVarKVs}, Player)
+	end
 end
 
 function TOOL:RightClick(_)
