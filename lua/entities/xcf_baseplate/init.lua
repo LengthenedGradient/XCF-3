@@ -70,7 +70,11 @@ function ENT:XCF_PostMenuSpawn()
 end
 
 function ENT:UpdateOverlay()
-	self:SetOverlayText("test")
+	local DisplayStr = ""
+	for _, DataVarName in ipairs(XCF.DataVarScopesOrdered.xcf_baseplate or {}) do
+		DisplayStr = DisplayStr .. DataVarName .. ": " .. tostring(self.XCF_LiveData[DataVarName]) .. "\n"
+	end
+	self:SetOverlayText(DisplayStr)
 end
 
 function ENT:Think()

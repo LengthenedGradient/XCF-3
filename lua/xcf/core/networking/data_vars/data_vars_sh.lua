@@ -279,14 +279,29 @@ do -- Defining default data variables and types
 	local StoredEntityDV = XCF.DefineDataVarType("StoredEntity")
 	StoredEntityDV.PreCopy = function(_, _, Value) return Value:EntIndex() end
 	StoredEntityDV.PostPaste = function(_, _, Value, CreatedEnts) return CreatedEnts[Value] end
-	StoredEntityDV.CreatePanel = function(Menu, DataVar) return Menu:AddCheckbox(DataVar.Name) end
+
+	local StoredEntitiesDV = XCF.DefineDataVarType("StoredEntities")
+	StoredEntitiesDV.PreCopy = function(_, _, Value)
+		local Result = {}
+		for Entity in pairs(Value) do Result[#Result + 1] = Entity:EntIndex() end
+		return Result
+	end
+	StoredEntitiesDV.PostPaste = function(_, _, Value, CreatedEnts)
+		local Result = {}
+		for _, EntIndex in ipairs(Value) do
+			local Created = CreatedEnts[EntIndex]
+			if IsValid(Created) then Result[#Result + 1] = Created end
+		end
+		return Result
+	end
 
 	----------------------------------------------------------
 
 	-- Test variable
 	XCF.DefineDataVar("TestVar", "TestScope", "String", "TestValue")
 
-	-- Todo: Separate not networking from not showing on menu
+	-- TODO: Separate not networking from not showing on menu
+	-- TODO: Make serverside settings apply propperly, also through presets
 	XCF.DefineDataVar("ServerDataAllowAdmin", "ServerSettings", "Bool", false)
 	XCF.DefineDataVar("DisableLegalChecks", "ServerSettings", "Bool", false)
 
