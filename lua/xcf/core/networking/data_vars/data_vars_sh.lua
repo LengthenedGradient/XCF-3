@@ -158,8 +158,8 @@ do -- Managing data variable synchronization and networking
 		if not DataVar then return end
 
 		local Value = DataVar.Values[Player or (CLIENT and LocalPlayer()) or "Server"]
-		if not Value and DataVar.Default ~= nil then return DataVar.Default end
-		return Value or (not IgnoreUnset and DataVar.Default)
+		if not Value and not IgnoreUnset then return DataVar.Default end
+		return Value
 	end
 
 	--- Sets all data variables at once using a nested table format: KVs[Scope][Name] = Value.

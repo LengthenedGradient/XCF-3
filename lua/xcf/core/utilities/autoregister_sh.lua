@@ -22,6 +22,8 @@ Notable variables:
 
 XCF.EntityTables = XCF.EntityTables or {}
 
+local empty_table = {}
+
 -- Public entry point
 function XCF.SpawnEntity(Class, Player, Pos, Angle, DataVarKVs, FromDupe, NoUndo)
 	print("XCF.SpawnEntity")
@@ -70,7 +72,12 @@ function XCF.AutoRegister(ENT, Class, _)
 
 	function ENT:Update(DataVarKVs)
 		XCF.SaveEntity(self)
-		self.XCF_LiveData = table.Copy(DataVarKVs)
+
+		-- Update the live data with the new values
+		for DataVarName, Value in pairs(DataVarKVs) do
+			self.XCF_LiveData[DataVarName] = Value
+		end
+
 		self:XCF_PostUpdateEntityData()
 		XCF.RestoreEntity(self)
 	end
@@ -86,7 +93,7 @@ function XCF.AutoRegister(ENT, Class, _)
 	function ENT:PreEntityCopy()
 		print("PreEntityCopy")
 		self.XCF_DupeData = table.Copy(self.XCF_LiveData)
-		for _, DataVarName in ipairs(XCF.DataVarScopesOrdered[Class] or {}) do
+		for _, DataVarName in ipairs(XCF.DataVarScopesOrdered[Class] or empty_table) do
 			local DataVar = XCF.DataVarsByScopeAndName[Class] and XCF.DataVarsByScopeAndName[Class][DataVarName]
 			if DataVar and DataVar.Type.PreCopy then
 				local Sanitized = DataVar.Type.PreCopy(self, DataVar, self.XCF_DupeData[DataVarName])
@@ -108,7 +115,7 @@ function XCF.AutoRegister(ENT, Class, _)
 	local PostEntityPaste = ENT.PostEntityPaste
 	function ENT:PostEntityPaste(Player, Ent, CreatedEntities)
 		print("PostEntityPaste", Ent, CreatedEntities)
-		for _, DataVarName in ipairs(XCF.DataVarScopesOrdered[Class] or {}) do
+		for _, DataVarName in ipairs(XCF.DataVarScopesOrdered[Class] or empty_table) do
 			local DataVar = XCF.DataVarsByScopeAndName[Class] and XCF.DataVarsByScopeAndName[Class][DataVarName]
 			if DataVar and DataVar.Type.PostPaste then
 				local Sanitized = DataVar.Type.PostPaste(self, DataVar, self.XCF_LiveData[DataVarName], CreatedEntities)

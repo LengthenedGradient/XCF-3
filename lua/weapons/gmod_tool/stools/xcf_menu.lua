@@ -2,6 +2,9 @@ TOOL.Name = "XCF Menu"
 TOOL.Category = "Construction"
 
 if CLIENT then
+	language.Add("tool.xcf_menu.name", "Extendable Combat Framework")
+	language.Add("tool.xcf_menu.desc", "Main menu for the XCF addon")
+
 	TOOL.BuildCPanel = function(Panel)
 		local BasePanel = XCF.InitMenuReloadableBase(Panel, "xcf_reload_main_menu", "CreateMainMenu")
 		Panel:AddItem(BasePanel)
