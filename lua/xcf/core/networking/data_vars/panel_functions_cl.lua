@@ -48,7 +48,7 @@ end
 --- @param setterName string The name of the panel's setter function (e.g. SetValue, SetText, SetChecked, etc.)
 --- @param getterName string The name of the panel's getter function (e.g. GetValue, GetText, GetChecked, etc.)
 --- @param changeName string The name of the panel's OnVAlueChanged-like function to detour (e.g. OnValueChanged, OnTextChanged, OnCheckedChanged, etc.)
-function PanelMeta:BindToDataVarAdv(Name, Scope, setterName, getterName, changeName)
+function PanelMeta:BindToDataVarAdv(Name, Scope, setterName, getterName, changeName, TargetRealm)
 	local suppress = false -- Need to prevent infinite loops when both panel and DataVar update each other
 
 	local function SetValue(value)
@@ -61,7 +61,7 @@ function PanelMeta:BindToDataVarAdv(Name, Scope, setterName, getterName, changeN
 	local function PushToDataVar(pnl)
 		if suppress then return end
 		local value = pnl[getterName](pnl)
-		XCF.SetDataVar(Name, Scope, value)
+		XCF.SetDataVar(Name, Scope, value, TargetRealm)
 	end
 
 	self:HijackAfter(changeName, PushToDataVar)
@@ -73,7 +73,7 @@ function PanelMeta:BindToDataVarAdv(Name, Scope, setterName, getterName, changeN
 	end)
 
 	-- Initialize with current / default value (unset values remain unset)
-	local initial = CLIENT and XCF.GetDataVar(Name, Scope)
+	local initial = CLIENT and XCF.GetDataVar(Name, Scope, TargetRealm)
 	if initial ~= nil then
 		SetValue(initial)
 	end

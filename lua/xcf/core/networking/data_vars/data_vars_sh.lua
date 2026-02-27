@@ -186,22 +186,22 @@ do -- Managing data variable synchronization and networking
 end
 
 do -- Automatic Menu Generation
-	function XCF.CreatePanelFromDataVar(Menu, DataVar)
+	function XCF.CreatePanelFromDataVar(Menu, DataVar, TargetRealm)
 		if DataVar.Options.Hidden then return end
 		if not DataVar.Type.CreatePanel then return end
 		local Panel = DataVar.Type.CreatePanel(Menu, DataVar)
 		-- print(Panel, DataVar.Name, DataVar.Scope)
-		if Panel.BindToDataVar then Panel:BindToDataVar(DataVar.Name, DataVar.Scope) end
+		if Panel.BindToDataVar then Panel:BindToDataVar(DataVar.Name, DataVar.Scope, TargetRealm) end
 		if DataVar.Tooltip then Panel:SetTooltip(DataVar.Tooltip) end
 		return Panel
 	end
 
-	function XCF.CreatePanelsFromDataVars(Menu, Scope)
+	function XCF.CreatePanelsFromDataVars(Menu, Scope, TargetRealm)
 		local Panels = {}
 		for _, Name in ipairs(XCF.DataVarScopesOrdered[Scope] or {}) do
 			local DataVar = XCF.DataVarsByScopeAndName[Scope][Name]
 			if DataVar then
-				Panels[Name] = XCF.CreatePanelFromDataVar(Menu, DataVar)
+				Panels[Name] = XCF.CreatePanelFromDataVar(Menu, DataVar, TargetRealm)
 			end
 		end
 		return Panels

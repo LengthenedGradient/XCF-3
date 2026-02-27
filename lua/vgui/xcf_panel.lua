@@ -93,8 +93,8 @@ function PANEL:AddCheckbox(Text)
 	Panel:SetFont("XCF_Control")
 	Panel:SetDark(true)
 
-	function Panel:BindToDataVar(Name, Scope)
-		self:BindToDataVarAdv(Name, Scope, "SetChecked", "GetChecked", "OnChange")
+	function Panel:BindToDataVar(Name, Scope, TargetRealm)
+		self:BindToDataVarAdv(Name, Scope, "SetChecked", "GetChecked", "OnChange", TargetRealm)
 	end
 
 	return Panel
@@ -112,8 +112,8 @@ function PANEL:AddSlider(Title, Min, Max, Decimals)
 
 	Panel.Label:SetFont("XCF_Control")
 
-	function Panel:BindToDataVar(Name, Scope)
-		self:BindToDataVarAdv(Name, Scope, "SetValue", "GetValue", "OnValueChanged")
+	function Panel:BindToDataVar(Name, Scope, TargetRealm)
+		self:BindToDataVarAdv(Name, Scope, "SetValue", "GetValue", "OnValueChanged", TargetRealm)
 	end
 
 	return Panel
@@ -134,8 +134,8 @@ function PANEL:AddNumberWang(Label, Min, Max, Decimals)
 	Text:SetDark(true)
 	Text:Dock(TOP)
 
-	function Wang:BindToDataVar(Name, Scope)
-		Wang:BindToDataVarAdv(Name, Scope, "SetValue", "GetValue", "OnValueChanged")
+	function Wang:BindToDataVar(Name, Scope, TargetRealm)
+		Wang:BindToDataVarAdv(Name, Scope, "SetValue", "GetValue", "OnValueChanged", TargetRealm)
 	end
 
 	return Wang, Text
@@ -183,8 +183,8 @@ function PANEL:AddTextEntry(LabelText)
 
 	Label:Dock(LEFT)
 
-	function Entry:BindToDataVar(Name, Scope)
-		self:BindToDataVarAdv(Name, Scope, "SetText", "GetText", "OnTextChanged")
+	function Entry:BindToDataVar(Name, Scope, TargetRealm)
+		self:BindToDataVarAdv(Name, Scope, "SetText", "GetText", "OnTextChanged", TargetRealm)
 	end
 
 	return Entry, Base, Label
@@ -192,7 +192,7 @@ end
 
 -- Similar to ControlPresets derma panel, but for XCF.
 -- Reference: https://github.com/Facepunch/garrysmod/blob/master/garrysmod/gamemodes/sandbox/gamemode/spawnmenu/controls/control_presets.lua
-function PANEL:AddPresetsBar(PresetScope)
+function PANEL:AddPresetsBar(PresetScope, TargetRealm)
 	local Panel = self:Add("DPanel")
 	Panel:Dock(TOP)
 	Panel:SetTall(20)
@@ -257,8 +257,7 @@ function PANEL:AddPresetsBar(PresetScope)
 				)
 			end
 
-			local Data = XCF.GetDataVars(PresetScope)
-			XCF.AddPreset(text, PresetScope, PresetScope, Data)
+			XCF.AddPreset(text, PresetScope, PresetScope, nil, TargetRealm)
 			XCF.SavePreset(text, PresetScope)
 			Dropdown:RefreshChoices(text)
 		end)
@@ -310,7 +309,7 @@ function PANEL:AddVec3Slider(Title, Min, Max, Decimals)
 	-- TODO: Refactor this and other panel binds to reduce code duplication?
 
 	-- Binds three sliders to a vector DataVar
-	function Base:BindToDataVar(Name, Scope)
+	function Base:BindToDataVar(Name, Scope, TargetRealm)
 		local suppress = false
 
 		local function GetValue()
@@ -325,7 +324,7 @@ function PANEL:AddVec3Slider(Title, Min, Max, Decimals)
 
 		local function PushToDataVar()
 			if suppress then return end
-			XCF.SetDataVar(Name, Scope, GetValue())
+			XCF.SetDataVar(Name, Scope, GetValue(), TargetRealm)
 		end
 
 		-- When any one slider changes, push the new vector to the DataVar
@@ -343,7 +342,7 @@ function PANEL:AddVec3Slider(Title, Min, Max, Decimals)
 		end)
 
 		-- Initialize with current/default value
-		local initial = XCF.GetDataVar(Name, Scope)
+		local initial = XCF.GetDataVar(Name, Scope, TargetRealm)
 		if initial then
 			SetValue(initial)
 		end

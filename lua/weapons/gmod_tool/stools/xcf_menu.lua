@@ -29,6 +29,7 @@ function TOOL:LeftClick(Trace)
 			XCF.UpdateEntityData(Entity, DataVarKVs)
 			return true
 		end
+
 		local Position = Trace.HitPos + Trace.HitNormal * 128
 		local Angles   = Trace.HitNormal:Angle():Up():Angle()
 		local Success, Result = XCF.SpawnEntity(SpawnClass, Player, Position, Angles, DataVarKVs, false)
