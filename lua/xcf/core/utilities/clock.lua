@@ -1,4 +1,5 @@
-local Clock        = XCF.Utilities.Clock
+XCF.Clock = XCF.Clock or {}
+local Clock        = XCF.Clock
 local Run          = hook.Run
 local TickCount    = engine.TickCount
 local TickInterval = engine.TickInterval

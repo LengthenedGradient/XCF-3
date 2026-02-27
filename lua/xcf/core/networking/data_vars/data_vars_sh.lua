@@ -75,15 +75,15 @@ do -- Managing data variable synchronization and networking
 	function XCF.SetDataVar(Name, Scope, Value, ToSync)
 		ToSync = ToSync or (CLIENT and LocalPlayer()) or "Server" -- default values
 
+		local SyncServer = ToSync == "Server"
+		if CLIENT and SyncServer and not XCF.CanSetServerData(LocalPlayer()) then return end -- Don't allow unauthorized clients to send server data
+
 		-- Only do stuff if something changes
 		local DataVar = XCF.DataVarsByScopeAndName[Scope][Name]
 		if not DataVar.Options.Hidden and DataVar.Values[ToSync] ~= Value then
 			DataVar.Values[ToSync] = Value
 
-			local SyncServer = ToSync == "Server"
 			StartWriteDataVar(DataVar, Value, SyncServer)
-
-			if CLIENT and SyncServer and not XCF.CanSetServerData(LocalPlayer()) then return end -- Don't allow unauthorized clients to send server data
 
 			if SERVER then
 				if SyncServer then net.Broadcast() -- Broadcast server change to all clients
@@ -113,7 +113,11 @@ do -- Managing data variable synchronization and networking
 		if SERVER and SyncServerRealm and not XCF.CanSetServerData(ply) then return end
 
 		if SERVER then
-			if SyncServerRealm then DataVar.Values.Server = Value
+			if SyncServerRealm then
+				-- Update the server's value and broadcast the change to all clients other than the proposer
+				DataVar.Values.Server = Value
+				StartWriteDataVar(DataVar, Value, true)
+				net.SendOmit(ply)
 			else DataVar.Values[ply] = Value end
 		else
 			if SyncServerRealm then DataVar.Values.Server = Value
@@ -149,7 +153,7 @@ do -- Managing data variable synchronization and networking
 		if not IsValid(Player) then return true end -- No player, probably the server
 		if Player:IsSuperAdmin() then return true end
 
-		return XCF.GetRealmData("ServerDataAllowAdmin", nil, true) and Player:IsAdmin()
+		return XCF.GetDataVar("ServerDataAllowAdmin", "ServerSettings") and Player:IsAdmin()
 	end
 
 	--- Gets the value of a data variable for the given Player/"Server"
@@ -304,6 +308,7 @@ do -- Defining default data variables and types
 	-- TODO: Make serverside settings apply propperly, also through presets
 	XCF.DefineDataVar("ServerDataAllowAdmin", "ServerSettings", "Bool", false)
 	XCF.DefineDataVar("DisableLegalChecks", "ServerSettings", "Bool", false)
+	XCF.DefineDataVar("DataVarNetQueue", "ServerSettings", "Float", 1.0, {Min = 0, Max = 1.0})
 
 	XCF.DefineDataVar("ClientEffectMultiplier", "ClientSettings", "Float", 1.0, {Min = 0, Max = 1.0})
 	XCF.DefineDataVar("ClientSoundMultiplier", "ClientSettings", "Float", 1.0, {Min = 0, Max = 1.0})
