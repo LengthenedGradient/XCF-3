@@ -167,6 +167,7 @@ local function loadAddon(name, folder)
 	local context = _G[name] or {}
 	local library = { folders = {}, files = {}, }
 
+	local StartTime = CurTime()
 	print("\nInitializing " .. name .. " loader.")
 	print("> Creating global " .. name .. " table...")
 	_G[name] = context
@@ -179,6 +180,7 @@ local function loadAddon(name, folder)
 
 	print("> Loaded " .. files .. " files and " .. folders .. " folders.")
 	print(name .. " has finished loading.\n")
+	print("Loading took " .. math.Round(CurTime() - StartTime, 2) .. " seconds.")
 
 	hook.Run(name .. "_OnLoadAddon", context)
 end
