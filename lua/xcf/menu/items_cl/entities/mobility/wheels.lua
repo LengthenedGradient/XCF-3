@@ -1,0 +1,1 @@
+XCF.AddMenuItem(1, "Wheels", "icon16/asterisk_orange.png", nil, "Mobility")

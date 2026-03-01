@@ -65,7 +65,7 @@ function XCF.UpdateEntityData(Entity, DataVarKVs)
 	return Result, Message
 end
 
-function XCF.AutoRegister(ENT, Class, _)
+function XCF.AutoRegister(ENT, Class)
 	if CLIENT then return end -- TODO: Maybe this is wrong?
 
 	function ENT:Update(DataVarKVs)

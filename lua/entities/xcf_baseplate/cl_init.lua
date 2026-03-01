@@ -1,3 +1,3 @@
-include("shared.lua") -- This runs shared.lua on the client
+include("shared.lua")
 
-XCF.AutoRegister(ENT, "xcf_baseplate", "xcf_baseplate")
+XCF.AutoRegister(ENT, "xcf_baseplate")
