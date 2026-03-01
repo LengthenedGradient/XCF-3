@@ -72,4 +72,4 @@ function ENT:Think()
 	self:UpdateOverlay()
 end
 
-XCF.AutoRegister(ENT, "xcf_baseplate")
+XCF.AutoRegister(ENT)

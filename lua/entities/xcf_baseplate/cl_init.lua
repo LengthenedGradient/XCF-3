@@ -1,3 +1,3 @@
 include("shared.lua")
 
-XCF.AutoRegister(ENT, "xcf_baseplate")
+XCF.AutoRegister(ENT)

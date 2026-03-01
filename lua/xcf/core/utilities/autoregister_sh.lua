@@ -68,6 +68,8 @@ end
 function XCF.AutoRegister(ENT, Class)
 	if CLIENT then return end -- TODO: Maybe this is wrong?
 
+	local Class = ENT.Class
+
 	function ENT:Update(DataVarKVs)
 		XCF.SaveEntity(self)
 

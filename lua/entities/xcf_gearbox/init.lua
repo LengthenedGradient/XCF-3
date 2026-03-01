@@ -3,4 +3,4 @@ AddCSLuaFile("shared.lua")
 
 include("shared.lua")
 
-XCF.AutoRegister(ENT, "xcf_gearbox")
+XCF.AutoRegister(ENT)
