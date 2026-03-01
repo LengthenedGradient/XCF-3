@@ -60,7 +60,7 @@ do -- Managing data variable synchronization and networking
 		net.Start("XCF_DV_NET")
 		net.WriteUInt(DataVar.UUID, XCF_DATA_VAR_LIMIT_EXPONENT)
 		net.WriteBool(SyncServer) -- Whether we are synchronizing server data or client data
-		DataVar.Type.Write(Value)
+		DataVar.Type.NetWrite(Value, DataVar)
 	end
 
 	--- Synchronizes a data variable change across the network
@@ -107,7 +107,7 @@ do -- Managing data variable synchronization and networking
 		if not DataVar then return end
 
 		local SyncServerRealm = net.ReadBool()
-		local Value = DataVar.Type.Read()
+		local Value = DataVar.Type.NetRead(DataVar)
 
 		-- Unauthorized clients cannot set the server's view of the data
 		if SERVER and SyncServerRealm and not XCF.CanSetServerData(ply) then return end
@@ -219,64 +219,60 @@ do -- Defining default data variables and types
 
 	-- Basic types
 	local BoolDV = XCF.DefineDataVarType("Bool")
-	BoolDV.Read, BoolDV.Write = net.ReadBool, net.WriteBool
+	BoolDV.NetRead, BoolDV.NetWrite = net.ReadBool, net.WriteBool
 	BoolDV.CreatePanel = function(Menu, DataVar) return Menu:AddCheckbox(DataVar.Name) end
 
 	local StringDV = XCF.DefineDataVarType("String")
-	StringDV.Read, StringDV.Write = net.ReadString, net.WriteString
+	StringDV.NetRead, StringDV.NetWrite = net.ReadString, net.WriteString
 	StringDV.CreatePanel = function(Menu, DataVar) return Menu:AddTextEntry(DataVar.Name) end
 
 	local FloatDV = XCF.DefineDataVarType("Float")
-	FloatDV.Read, FloatDV.Write = net.ReadFloat, net.WriteFloat
+	FloatDV.NetRead, FloatDV.NetWrite = net.ReadFloat, net.WriteFloat
 	FloatDV.CreatePanel = CreateSliderMenu
 
 	local DoubleDV = XCF.DefineDataVarType("Double")
-	DoubleDV.Read, DoubleDV.Write = net.ReadDouble, net.WriteDouble
+	DoubleDV.NetRead, DoubleDV.NetWrite = net.ReadDouble, net.WriteDouble
 	DoubleDV.CreatePanel = CreateSliderMenu
 
 	local ColorDV = XCF.DefineDataVarType("Color")
-	ColorDV.Read, ColorDV.Write = net.ReadColor, net.WriteColor
+	ColorDV.NetRead, ColorDV.NetWrite = net.ReadColor, net.WriteColor
 
 	local AngleDV = XCF.DefineDataVarType("Angle")
-	AngleDV.Read, AngleDV.Write = net.ReadAngle, net.WriteAngle
+	AngleDV.NetRead, AngleDV.NetWrite = net.ReadAngle, net.WriteAngle
 
 	local VectorDV = XCF.DefineDataVarType("Vector")
-	VectorDV.Read, VectorDV.Write = net.ReadVector, net.WriteVector
+	VectorDV.NetRead, VectorDV.NetWrite = net.ReadVector, net.WriteVector
 	VectorDV.CreatePanel = function(Menu, DataVar) return Menu:AddVec3Slider(DataVar.Name, DataVar.Options.Min, DataVar.Options.Max, 2) end
 
 	local NormalDV = XCF.DefineDataVarType("Normal")
-	NormalDV.Read, NormalDV.Write = net.ReadNormal, net.WriteNormal
+	NormalDV.NetRead, NormalDV.NetWrite = net.ReadNormal, net.WriteNormal
 
 	local EntityDV = XCF.DefineDataVarType("Entity")
-	EntityDV.Read, EntityDV.Write = net.ReadEntity, net.WriteEntity
+	EntityDV.NetRead, EntityDV.NetWrite = net.ReadEntity, net.WriteEntity
 
 	local PlayerDV = XCF.DefineDataVarType("Player")
-	PlayerDV.Read, PlayerDV.Write = net.ReadPlayer, net.WritePlayer
+	PlayerDV.NetRead, PlayerDV.NetWrite = net.ReadPlayer, net.WritePlayer
 
 	local TableDV = XCF.DefineDataVarType("Table")
-	TableDV.Read, TableDV.Write = net.ReadTable, net.WriteTable
+	TableDV.NetRead, TableDV.NetWrite = net.ReadTable, net.WriteTable
 
 	local DataDV = XCF.DefineDataVarType("Data")
-	DataDV.Read, DataDV.Write = net.ReadData, net.WriteData
+	DataDV.NetRead, DataDV.NetWrite = net.ReadData, net.WriteData
 
 	local BitDV = XCF.DefineDataVarType("Bit")
-	BitDV.Read, BitDV.Write = net.ReadBit, net.WriteBit
+	BitDV.NetRead, BitDV.NetWrite = net.ReadBit, net.WriteBit
 
 	-- Signed integers (1 to 32 bits)
-	for i = 1, 32 do
-		local IntDV = XCF.DefineDataVarType("Int" .. i)
-		IntDV.Read = function() return net.ReadInt(i) end
-		IntDV.Write = function(v) net.WriteInt(v, i) end
-		IntDV.CreatePanel = CreateWangMenu
-	end
+	local IntDV = XCF.DefineDataVarType("Int")
+	IntDV.NetRead = function(DataVar) return net.ReadInt(DataVar.Options.Bits or 32) end
+	IntDV.NetWrite = function(Value, DataVar) net.WriteInt(Value, DataVar.Options.Bits or 32) end
+	IntDV.CreatePanel = CreateWangMenu
 
 	-- Unsigned integers (1 to 32 bits)
-	for i = 1, 32 do
-		local UIntDV = XCF.DefineDataVarType("UInt" .. i)
-		UIntDV.Read = function() return net.ReadUInt(i) end
-		UIntDV.Write = function(v) net.WriteUInt(v, i) end
-		UIntDV.CreatePanel = CreateWangMenu
-	end
+	local UIntDV = XCF.DefineDataVarType("UInt")
+	UIntDV.NetRead = function(DataVar) return net.ReadUInt(DataVar.Options.Bits or 32) end
+	UIntDV.NetWrite = function(Value, DataVar) net.WriteUInt(Value, DataVar.Options.Bits or 32) end
+	UIntDV.CreatePanel = CreateWangMenu
 
 	----------------------------------------------------------
 
@@ -300,13 +296,13 @@ do -- Defining default data variables and types
 		return Result
 	end
 
+	-- TODO: Change to a class system to allow for types to inherit functionality from each other
+
 	----------------------------------------------------------
 
 	-- Test variable
 	XCF.DefineDataVar("TestVar", "TestScope", "String", "TestValue")
 
-	-- TODO: Separate not networking from not showing on menu
-	-- TODO: Make serverside settings apply propperly, also through presets
 	XCF.DefineDataVar("ServerDataAllowAdmin", "ServerSettings", "Bool", false)
 	XCF.DefineDataVar("DisableLegalChecks", "ServerSettings", "Bool", false)
 	XCF.DefineDataVar("DataVarNetQueue", "ServerSettings", "Float", 1.0, {Min = 0, Max = 1.0})
