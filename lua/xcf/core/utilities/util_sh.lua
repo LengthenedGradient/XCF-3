@@ -80,8 +80,8 @@ do -- Baseplate lua seat generation
 			end
 			local XCF_WirelibDetour_GetClosestRealVehicle = XCF.WirelibDetour_GetClosestRealVehicle
 			function WireLib.GetClosestRealVehicle(Vehicle, Position, Notify)
-				if IsValid(Vehicle) and Vehicle.XCF and Vehicle.XCF_GetSeatProxy then
-					local Pod = Vehicle:XCF_GetSeatProxy()
+				if IsValid(Vehicle) then
+					local Pod = Vehicle.XCF_BaseplateSeat
 					if IsValid(Pod) then return Pod end
 				end
 
@@ -102,8 +102,8 @@ do -- Baseplate lua seat generation
 				if CLIENT then return true end
 
 				local ent = trace.Entity
-				if self:GetStage() == 1 and self.Component:GetClass() == "starfall_hud" and ent.XCF and ent.XCF_GetSeatProxy then
-					self.Component:LinkVehicle(ent:XCF_GetSeatProxy())
+				if self:GetStage() == 1 and self.Component:GetClass() == "starfall_hud" then
+					self.Component:LinkVehicle(ent.XCF_BaseplateSeat)
 					self:SetStage(0)
 					SF.AddNotify(self:GetOwner(), "Linked to vehicle successfully.", "GENERIC" , 4, "DRIP2")
 					return true
@@ -128,8 +128,6 @@ do -- Baseplate lua seat generation
 		Pod:SetKeyValue("limitview", 0)                                            -- Let the player look around
 
 		Pod.Vehicle = Entity
-		Pod.XCF = Pod.XCF or {}
-		Pod.XCF.LuaGeneratedSeat = true
 
 		if not IsValid(Pod) then return end
 
@@ -145,6 +143,6 @@ do -- Baseplate lua seat generation
 		Pod.XCF_InvisibleToBallistics = true
 		Pod.XCF_InvisibleToTrace = true
 
-		Entity.Pod = Pod
+		Entity.XCF_BaseplateSeat = Pod
 	end
 end

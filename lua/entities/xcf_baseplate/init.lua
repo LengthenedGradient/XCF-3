@@ -7,8 +7,6 @@ function ENT:ConfigureLuaSeat(Pod, Player)
 	XCF.ConfigureLuaSeat(self, Pod, Player)
 	self.XCF_LiveData.LuaSeat = Pod
 
-	self.Pod = Pod
-
 	hook.Add("PlayerEnteredVehicle", self, function(_, Ply, Veh)
 		if Veh == Pod then Ply:SetNoDraw(true) end
 	end)
@@ -55,7 +53,6 @@ function ENT:PostEntityPaste(Owner, _, _, _)
 	if not IsValid(Pod) then -- Repair if the seat wasn't duplicated correctly
 		Pod = XCF.GenerateLuaSeat(self, Owner, self:GetPos(), self:GetAngles(), self:GetModel(), true)
 	end
-	self.Pod = Pod
 	self:ConfigureLuaSeat(Pod, Owner)
 end
 
