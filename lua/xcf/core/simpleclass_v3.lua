@@ -16,106 +16,118 @@
 local Classes = {} --- A mapping from a class' ID to its table
 local Queued = {} -- A mapping from a class' ID to a (mapping from its children's IDs to their tables)
 
---- Initializes a class by adding its metatable and running callbacks/hooks.
---- Recursively initializes children waiting on this class
---- This is called when a class and its parent are both initialized
---- @param ID string The ID of the class
---- @param NewClass table The class table of the class
---- @param BaseClass table The class table of the base class
-local function InitializeClass(ID, NewClass, BaseClass)
-	local ClassMeta = {
-		__index = BaseClass, -- If I don't have it, check my super (inheritance)
-		__tostring = function(self) return "Class (" .. self.ID .. ")" end,
+do
+	--- Initializes a class by adding its metatable and running callbacks/hooks.
+	--- Recursively initializes children waiting on this class
+	--- This is called when a class and its parent are both initialized
+	--- @param ID string The ID of the class
+	--- @param NewClass table The class table of the class
+	--- @param BaseClass table The class table of the base class
+	local function InitializeClass(FullyQualifiedName, NewClass, BaseClass)
+		local TypeName = string.format("Type (%s)", FullyQualifiedName)
 
-		-- Instantiation
-		__call = function(self, ...)
-			local obj = setmetatable({}, {
-				__index = self, -- Instances should use their class' static methods/variables if they dont have them set
-				__tostring = function(instance) return "Instance of Class(" .. instance.ID .. ")" end, -- Avoid ambiguity/shadowing of self and the instance
-			})
-			if self.initialize then self.initialize(obj, ...) end -- Constructor if applicable
-			return obj
+		local ClassMeta = {
+			__index = BaseClass, -- If I don't have it, check my super (inheritance)
+			__tostring = function() return TypeName end,
+
+			-- Instantiation
+			__call = function(self, ...)
+				local Instance    = {}
+				local Address     = tostring(Instance):sub(8) -- Maps "table: 0x80880a76edcedbf2" -> "80880a76edcedbf2"
+				local Stringified = string.format("%s: %s", FullyQualifiedName, Address) -- Maps "Chihuahua" -> "Chihuahua: 80880a76edcedbf2"
+				setmetatable(Instance, {
+					__index = self, -- Instances should use their class' static methods/variables if they dont have them set
+					__tostring = function(self) return self.ToString and self:ToString() or Stringified end, -- Avoid ambiguity/shadowing of self and the instance
+				})
+				if self.new then self.new(Instance, ...) end -- Constructor if applicable
+				return Instance
+			end
+		}
+		setmetatable(NewClass, ClassMeta)
+
+		-- Index and Initialize ourselves
+		Classes[FullyQualifiedName] = NewClass
+		if BaseClass then BaseClass.Children[FullyQualifiedName] = NewClass end -- Register ourselves as a child of our parent
+		NewClass.Parent = BaseClass
+
+		-- We should define GetType before calling the initializer
+		local function GetType() return NewClass end
+		NewClass.GetType = GetType
+
+		-- Call the initializer if it exists
+		if NewClass.OnInit then NewClass:OnInit(BaseClass) end
+
+		-- Initialize children waiting on us, the parent, to initialize
+		if Queued[FullyQualifiedName] then
+			for WaitingID, WaitingClass in pairs(Queued[FullyQualifiedName]) do
+				InitializeClass(WaitingID, WaitingClass, NewClass)
+				NewClass.Children[WaitingID] = WaitingClass
+			end
+			Queued[FullyQualifiedName] = nil
 		end
-	}
-	setmetatable(NewClass, ClassMeta)
-
-	-- Index and Initialize ourselves
-	Classes[ID] = NewClass
-	if BaseClass then BaseClass.Children[ID] = NewClass end -- Register ourselves as a child of our parent
-	NewClass.Parent = BaseClass
-
-	if NewClass.OnInit then NewClass:OnInit(BaseClass) end
-
-	-- Initialize children waiting on us, the parent, to initialize
-	if Queued[ID] then
-		for WaitingID, WaitingClass in pairs(Queued[ID]) do
-			InitializeClass(WaitingID, WaitingClass, NewClass)
-			NewClass.Children[WaitingID] = WaitingClass
-		end
-		Queued[ID] = nil
 	end
-end
 
---- Defines and returns a class' table, which you can define methods on.
---- @param ID string The ID of the class
---- @param BaseID string? The ID of the parent class
---- @param OnInit function? Ran when both the class and its parent are initialized. New and base class tables are passed as args.
---- @return NewClass table The table of the new class
-local function DefineClass(ID, BaseID, OnInit)
-	local BaseClass = Classes[BaseID]
-	local NewClass = {
-		ID = ID,
-		Parent = nil,
-		Children = {},
-		OnInit = OnInit
-	}
+	--- Defines and returns a class' table, which you can define methods on.
+	--- @param ID string The ID of the class
+	--- @param BaseID string? The ID of the parent class
+	--- @param OnInit function? Ran when both the class and its parent are initialized. New and base class tables are passed as args.
+	--- @return NewClass table The table of the new class
+	local function DefineClass(ID, BaseID, OnInit)
+		local BaseClass = Classes[BaseID]
+		local NewClass = Classes[ID] or {
+			ID = ID,
+			Parent = nil,
+			Children = {}
+		} -- This should allow for hot-reloading?
+		NewClass.OnInit = OnInit
 
-	-- If we have a parent and they don't exist
-	if BaseID and not BaseClass then
-		Queued[BaseID] = Queued[BaseID] or {}
-		Queued[BaseID][ID] = NewClass
+		-- If we have a parent and they don't exist
+		if BaseID and not BaseClass then
+			Queued[BaseID] = Queued[BaseID] or {}
+			Queued[BaseID][ID] = NewClass
+			return NewClass
+		end
+
+		-- Otherwise initialize
+		InitializeClass(ID, NewClass, BaseClass)
 		return NewClass
 	end
 
-	-- Otherwise initialize
-	InitializeClass(ID, NewClass, BaseClass)
-	return NewClass
-end
+	--- Returns a class' table from its ID
+	local function GetClass(ID)
+		return Classes[ID]
+	end
 
---- Returns a class' table from its ID
-local function GetClass(ID)
-	return Classes[ID]
-end
+	--- Returns a class' metatable from its ID
+	local function GetClassMeta(ID)
+		local Class = GetClass(ID)
+		return getmetatable(Class)
+	end
 
---- Returns a class' metatable from its ID
-local function GetClassMeta(ID)
-	local Class = GetClass(ID)
-	return getmetatable(Class)
+	XCF.DefineClass = DefineClass
+	XCF.GetClass = GetClass
+	XCF.GetClassMeta = GetClassMeta
 end
-
-XCF.DefineClass = DefineClass
-XCF.GetClass = GetClass
-XCF.GetClassMeta = GetClassMeta
 
 -- Example test code
--- local Snake = DefineClass("Snake", "Reptile")
--- local Frog = DefineClass("Frog", "Reptile")
--- local Reptile = DefineClass("Reptile", "Animal")
+-- local Snake = XCF.DefineClass("Snake", "Reptile")
+-- local Frog = XCF.DefineClass("Frog", "Reptile")
+-- local Reptile = XCF.DefineClass("Reptile", "Animal")
 
--- local Dog = DefineClass("Dog", "Mammal", function(Class, BaseClass)
+-- local Dog = XCF.DefineClass("Dog", "Mammal", function(Class, _)
 -- 	function Class:MakeNoise()
 -- 		print("Woof")
 -- 	end
 -- end)
 
--- local Cat = DefineClass("Cat", "Mammal")
--- local Mammal = DefineClass("Mammal", "Animal", function(Class, BaseClass)
+-- local Cat = XCF.DefineClass("Cat", "Mammal")
+-- local Mammal = XCF.DefineClass("Mammal", "Animal", function(Class, _)
 -- 	function Class:MakeNoise()
 -- 		print("Roar")
 -- 	end
 -- end)
 
--- local Animal = DefineClass("Animal", nil, function(Class, BaseClass)
+-- local Animal = XCF.DefineClass("Animal", nil, function(Class, _)
 -- 	function Class:MakeNoise()
 -- 		print("Animal Noise")
 -- 	end
